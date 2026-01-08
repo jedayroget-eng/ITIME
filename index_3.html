@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cedro Aventuras - Gestão Pro</title>
+    <style>
+        :root { --primary: #2d5a27; --secondary: #1b3022; --danger: #e74c3c; --bg: #f0f2f5; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); margin: 0; padding-bottom: 40px; }
+        
+        #login-screen {
+            display: flex; justify-content: center; align-items: center; height: 100vh;
+            background: var(--primary); position: fixed; width: 100%; z-index: 2000;
+        }
+        .login-box { background: white; padding: 40px; border-radius: 15px; width: 320px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        .btn-entrar { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+
+        #app-screen { display: none; padding: 15px; }
+        header { background: white; padding: 15px 25px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        
+        .panel { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .grid-veiculos { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-top: 15px; }
+        .v-btn { padding: 18px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; font-size: 14px; }
+        
+        .btn-branco { background: #95a5a6; color: black; }
+        .btn-vermelho { background: #c0392b; }
+        .btn-amarelo { background: #f1c40f; color: black; }
+        .btn-rosa { background: #e082ac; }
+        .btn-patinete { background: #34495e; }
+
+        .time-controls { display: flex; gap: 8px; align-items: center; margin: 15px 0; }
+        .btn-time { background: #ddd; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; font-size: 15px; }
+
+        .cards-area { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; }
+        .card { background: white; padding: 20px; border-radius: 10px; border-left: 8px solid var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: relative; }
+        .btn-card { padding: 15px 10px; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; flex: 1; font-size: 16px; }
+
+        .card.expired { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1001; width: 350px; border: 5px solid var(--danger); box-shadow: 0 0 100px rgba(0,0,0,0.8); }
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; }
+
+        .history { margin-top: 30px; background: white; padding: 20px; border-radius: 12px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        .badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .pago { background: #d4edda; color: #155724; }
+        .pendente { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+
+<div id="overlay" class="overlay"></div>
+
+<div id="login-screen">
+    <div class="login-box">
+        <h2 style="color: var(--primary); margin-top: 0;">🌲 Cedro Aventuras</h2>
+        <input type="text" id="user" placeholder="Usuário">
+        <input type="password" id="pass" placeholder="Senha">
+        <button class="btn-entrar" onclick="window.tentarLogin()">ACESSAR SISTEMA</button>
+    </div>
+</div>
+
+<div id="app-screen">
+    <header>
+        <div id="op-nome" style="font-weight: bold; color: var(--primary);">Operador: ---</div>
+        <div id="relogio" style="font-family: monospace; font-size: 18px;">00:00:00</div>
+        <button onclick="location.reload()">SAIR</button>
+    </header>
+
+    <div class="panel">
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <input type="text" id="nome-crianca" placeholder="Criança" style="flex: 1; margin: 0;">
+            <input type="text" id="nome-responsavel" placeholder="Responsável" style="flex: 1; margin: 0;">
+            <select id="pg-status" style="width: 200px; margin: 0;">
+                <option value="Não">PENDENTE</option>
+                <option value="Sim">PAGO</option>
+            </select>
+        </div>
+
+        <div class="time-controls">
+            <button class="btn-time" onclick="window.setQuickTime(5)">5m</button>
+            <button class="btn-time" onclick="window.setQuickTime(10)">10m</button>
+            <button class="btn-time" onclick="window.setQuickTime(15)">15m</button>
+            <button class="btn-time" onclick="window.adjustMainTime(-1)">-1</button>
+            <input type="number" id="tempo-padrao" value="10" style="width: 80px; margin: 0; text-align: center; font-size: 18px;">
+            <button class="btn-time" onclick="window.adjustMainTime(1)">+1</button>
+        </div>
+
+        <div class="grid-veiculos">
+            <button class="v-btn btn-branco" onclick="window.iniciar('Carrinho Branco')">🚗 C. Branco</button>
+            <button class="v-btn btn-vermelho" onclick="window.iniciar('Carrinho Vermelho')">🚗 C. Vermelho</button>
+            <button class="v-btn btn-amarelo" onclick="window.iniciar('Triciclo Amarelo')">🚲 T. Amarelo</button>
+            <button class="v-btn btn-branco" onclick="window.iniciar('Triciclo Branco')">🚲 T. Branco</button>
+            <button class="v-btn btn-rosa" onclick="window.iniciar('Triciclo Rosa')">🚲 T. Rosa</button>
+            <button class="v-btn btn-patinete" onclick="window.iniciar('Patinete')">🛴 Patinete</button>
+        </div>
+    </div>
+
+    <div class="cards-area" id="container-cards"></div>
+
+    <div class="history">
+        <h3>📊 Histórico Consolidado de Hoje</h3>
+        <table id="tabela-hist">
+            <thead>
+                <tr>
+                    <th>Veículo</th>
+                    <th>Criança</th>
+                    <th>Tempo</th>
+                    <th>Valor</th>
+                    <th>Status</th>
+                    <th>Operador</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyD3WIeOM21IkcjytZ9-We7vJjOV-dYq2IA",
+        authDomain: "cedro-aventuras.firebaseapp.com",
+        projectId: "cedro-aventuras",
+        storageBucket: "cedro-aventuras.firebasestorage.app",
+        messagingSenderId: "750741113990",
+        appId: "1:750741113990:web:35783abcde7f8eb6f6d507",
+        measurementId: "G-3M3RY91ETM"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let alugueis = [];
+    let usuarioAtivo = "";
+    const contas = { "Jeday": "", "Cydinha": "1234", "Thallys": "1234" };
+
+    // --- FUNÇÃO DE IMPRESSÃO ---
+   // --- FUNÇÃO DE IMPRESSÃO ADEQUADA PARA 58MM ---
+    window.imprimirRecibo = (id) => {
+        const r = alugueis.find(x => x.id_firebase === id);
+        if (!r) return;
+
+        // Cálculo da hora de término
+        const [hora, minuto] = r.inicio.split(':');
+        const dataFim = new Date();
+        dataFim.setHours(parseInt(hora));
+        dataFim.setMinutes(parseInt(minuto) + r.minsIniciais);
+        const horaTermino = dataFim.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
+        const janela = window.open('', '', 'width=300,height=600');
+        janela.document.write(`
+            <html>
+            <head>
+                <title>Recibo Cedro Aventuras</title>
+                <style>
+                    @page { margin: 0; }
+                    body { 
+                        font-family: 'Courier New', Courier, monospace; 
+                        width: 58mm; 
+                        margin: 0; 
+                        padding: 5px; 
+                        font-size: 16px; 
+                        color: #000;
+                    }
+                    .header { text-align: center; font-weight: bold; border-bottom: 1px dashed #000; margin-bottom: 8px; padding-bottom: 5px; }
+                    .item { margin: 4px 0; text-transform: uppercase; }
+                    .destaque { 
+                        font-size: 25px; 
+                        font-weight: bold; 
+                        display: block; 
+                        border: 1px solid #000; 
+                        padding: 3px; 
+                        text-align: center;
+                        margin-top: 5px;
+                    }
+                    .footer { text-align: center; margin-top: 10px; font-size: 10px; border-top: 1px dashed #000; padding-top: 5px; }
+                    @media print {
+                        .no-print { display: none; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    🌲 CEDRO AVENTURAS 🌲
+                </div>
+                
+                <div class="item">VEICULO: <strong>${r.veiculo}</strong></div>
+                
+                <div class="item">
+                    STATUS:
+                    <span class="destaque">${r.pago === 'Sim' ? 'PAGO' : 'NÃO PAGO'}</span>
+                </div>
+
+                <div class="item">VALOR: <strong>R$ ${r.minsIniciais},00</strong></div>
+                <div class="item">INICIO: <strong>${r.inicio}</strong></div>
+                <div class="item">TERMINO: <strong>${horaTermino}</strong></div>
+                
+                <div class="item" style="margin-top:5px;">CLIENTE: ${r.crianca}</div>
+
+                <div class="footer">
+                    Obrigado pela preferência!<br>
+                    ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
+                </div>
+
+                <script>
+                    window.onload = function() {
+                        window.print();
+                        // Aguarda 5 segundos antes de fechar a aba
+                        setTimeout(function() {
+                            window.close();
+                        }, 15000);
+                    }
+                <\/script>
+            </body>
+            </html>
+        `);
+        janela.document.close();
+    };
+
+    window.tentarLogin = () => {
+        const u = document.getElementById('user').value;
+        const p = document.getElementById('pass').value;
+        if (contas[u] === p) {
+            usuarioAtivo = u;
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('app-screen').style.display = 'block';
+            document.getElementById('op-nome').innerText = "Operador: " + u;
+        } else { alert("Acesso Negado!"); }
+    };
+
+    window.setQuickTime = (v) => document.getElementById('tempo-padrao').value = v;
+    window.adjustMainTime = (v) => {
+        let el = document.getElementById('tempo-padrao');
+        el.value = Math.max(1, parseInt(el.value) + v);
+    };
+
+    window.iniciar = async (veiculo) => {
+        const mins = parseInt(document.getElementById('tempo-padrao').value);
+        const agora = new Date();
+        const dados = {
+            veiculo,
+            crianca: document.getElementById('nome-crianca').value || "Cliente",
+            responsavel: document.getElementById('nome-responsavel').value || "N/A",
+            minsIniciais: mins,
+            segundosRestantes: mins * 60,
+            inicio: agora.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+            pago: document.getElementById('pg-status').value,
+            pausado: false,
+            expirado: false,
+            timestamp: Date.now()
+        };
+        await addDoc(collection(db, "ativos"), dados);
+        document.getElementById('nome-crianca').value = "";
+    };
+
+    window.finalizar = async (id) => {
+        const refAtivo = doc(db, "ativos", id);
+        const snap = await getDoc(refAtivo);
+        if (snap.exists()) {
+            const r = snap.data();
+            const minsRodados = Math.ceil(((r.minsIniciais * 60) - r.segundosRestantes) / 60);
+            await addDoc(collection(db, "historico"), {
+                veiculo: r.veiculo, crianca: r.crianca, tempo: Math.max(1, minsRodados),
+                pago: r.pago, operador: usuarioAtivo, data_fim: Date.now()
+            });
+            await deleteDoc(refAtivo);
+            document.getElementById('overlay').style.display = 'none';
+        }
+    };
+
+    window.ajustar = async (id, s) => {
+        const r = alugueis.find(x => x.id_firebase === id);
+        if(r) {
+            const novoTempo = Math.max(0, r.segundosRestantes + s);
+            await updateDoc(doc(db, "ativos", id), { 
+                segundosRestantes: novoTempo,
+                expirado: (novoTempo <= 0)
+            });
+        }
+    };
+
+    window.togglePausa = async (id, statusAtual) => {
+        const ref = doc(db, "ativos", id);
+        await updateDoc(ref, { pausado: !statusAtual });
+    };
+
+    onSnapshot(collection(db, "ativos"), (snap) => {
+        alugueis = snap.docs.map(d => ({ id_firebase: d.id, ...d.data() }));
+        renderizarCards();
+    });
+
+    onSnapshot(query(collection(db, "historico"), orderBy("data_fim", "desc")), (snap) => {
+        const tbody = document.querySelector("#tabela-hist tbody");
+        tbody.innerHTML = "";
+        snap.forEach(docSnap => {
+            const h = docSnap.data();
+            tbody.innerHTML += `<tr><td>${h.veiculo}</td><td>${h.crianca}</td><td>${h.tempo}m</td><td>R$ ${h.tempo},00</td><td><span class="badge ${h.pago === 'Sim' ? 'pago' : 'pendente'}">${h.pago === 'Sim' ? 'PAGO' : 'PENDENTE'}</span></td><td>${h.operador}</td></tr>`;
+        });
+    });
+
+    function renderizarCards() {
+        const container = document.getElementById('container-cards');
+        container.innerHTML = "";
+        let temExpirado = false;
+
+        alugueis.forEach(r => {
+            if(r.expirado) temExpirado = true;
+            const card = document.createElement('div');
+            card.className = `card ${r.expirado ? 'expired' : ''}`;
+            const min = Math.floor(r.segundosRestantes / 60);
+            const seg = (r.segundosRestantes % 60).toString().padStart(2, '0');
+            
+            card.innerHTML = `
+                <div style="display:flex; justify-content:space-between">
+                    <b>${r.veiculo}</b>
+                    ${r.expirado ? `<b onclick="window.finalizar('${r.id_firebase}')" style="color:red; cursor:pointer;">[X] FECHAR</b>` : ''}
+                </div>
+                <div style="font-size:35px; font-weight:bold; margin:10px 0;" id="timer-${r.id_firebase}">
+                    ${min}:${seg}
+                </div>
+                <small>Criança: ${r.crianca}</small><br>
+                <div style="margin-top:15px; display:flex; gap:8px; flex-wrap: wrap;">
+                    <button class="btn-card" style="background:green;" onclick="window.ajustar('${r.id_firebase}', 60)">+1m</button>
+                    <button class="btn-card" style="background:orange;" onclick="window.ajustar('${r.id_firebase}', -60)">-1m</button>
+                    <button class="btn-card" style="background:blue;" onclick="window.togglePausa('${r.id_firebase}', ${r.pausado})">
+                        ${r.pausado ? '▶' : '⏸'}
+                    </button>
+                    <button class="btn-card" style="background:#444;" onclick="window.imprimirRecibo('${r.id_firebase}')">🖨️ RECIBO</button>
+                    <button class="btn-card" style="background:red;" onclick="window.finalizar('${r.id_firebase}')">FIM</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+        document.getElementById('overlay').style.display = temExpirado ? 'block' : 'none';
+    }
+
+    setInterval(() => {
+        document.getElementById('relogio').innerText = new Date().toLocaleTimeString();
+        alugueis.forEach(async (r) => {
+            if (!r.pausado && r.segundosRestantes > 0) {
+                r.segundosRestantes--;
+                const timerEl = document.getElementById(`timer-${r.id_firebase}`);
+                if(timerEl) {
+                    const min = Math.floor(r.segundosRestantes / 60);
+                    const seg = (r.segundosRestantes % 60).toString().padStart(2, '0');
+                    timerEl.innerText = `${min}:${seg}`;
+                }
+                if (r.segundosRestantes <= 0) {
+                    await updateDoc(doc(db, "ativos", r.id_firebase), { segundosRestantes: 0, expirado: true });
+                    window.speechSynthesis.speak(new SpeechSynthesisUtterance("Tempo do " + r.veiculo + " acabou"));
+                }
+                if (r.segundosRestantes % 15 === 0) {
+                    updateDoc(doc(db, "ativos", r.id_firebase), { segundosRestantes: r.segundosRestantes });
+                }
+            }
+        });
+    }, 1000);
+</script>
+</body>
+</html>
