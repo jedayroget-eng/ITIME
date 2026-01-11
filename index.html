@@ -354,14 +354,32 @@
     };
 
     window.imprimir = async (id) => {
-        const s = await getDocs(collection(db, "ativos"));
-        const docAtivo = s.docs.find(x => x.id === id);
-        if(!docAtivo) return;
-        const d = docAtivo.data();
-        const statusPagamento = d.pago === 'Sim' ? 'PAGO' : 'PENDENTE';
-        
-        const w = window.open('', '', 'width=600,height=600');
-        const conteudo = `<html><body style="margin:0;padding:20px;"><div style="font-family:monospace;width:58mm;font-size:12px;">
+    const s = await getDocs(collection(db, "ativos"));
+    const docAtivo = s.docs.find(x => x.id === id);
+    if(!docAtivo) return;
+    const d = docAtivo.data();
+    const statusPagamento = d.pago === 'Sim' ? 'PAGO' : 'PENDENTE';
+
+    // 1. Cria um iframe oculto se não existir
+    let iframe = document.getElementById('print-iframe');
+    if (!iframe) {
+        iframe = document.createElement('iframe');
+        iframe.id = 'print-iframe';
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+    }
+
+    // 2. Monta o conteúdo do ticket
+    const conteudo = `
+        <html>
+        <head>
+            <style>
+                body { font-family: monospace; width: 58mm; padding: 10px; margin: 0; font-size: 12px; }
+                center { font-weight: bold; }
+                .border { border: 1px solid black; padding: 5px; text-align: center; margin-top: 10px; }
+            </style>
+        </head>
+        <body>
             <center>🌲 CEDRO AVENTURAS 🌲</center><br>
             ----------------------------<br>
             <b>VEÍCULO: ${d.veiculo}</b><br>
@@ -370,25 +388,29 @@
             <b>RESP.:</b> ${d.responsavel.toUpperCase()}<br><br>
             <b>INÍCIO:</b> ${d.inicio}<br>
             <b>FIM ESTIMADO:</b> ${d.previsaoFim}<br><br>
-            <div style="border:1px solid black; padding:5px; text-align:center;">
+            <div class="border">
                 <b style="font-size:16px;">STATUS: ${statusPagamento}</b>
             </div><br>
             ----------------------------<br>
             Operador: ${usuarioAtivo}<br>
             Data: ${new Date().toLocaleDateString()}<br>
             <center>Obrigado pela preferência!</center>
-        </div></body></html>`;
-        
-        w.document.write(conteudo);
-        w.document.close();
-        w.focus();
+        </body>
+        </html>
+    `;
 
-        // Pausa de segurança para o Chrome não crashar
-        setTimeout(() => {
-            w.print();
-            w.close();
-        }, 500);
-    };
+    // 3. Escreve no iframe e imprime
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(conteudo);
+    doc.close();
+
+    // 4. Pequena pausa para carregar o estilo e disparar a impressão
+    setTimeout(() => {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+    }, 250);
+};
 
     window.togglePausa = async (id) => {
         const s = await getDocs(collection(db, "ativos"));
