@@ -32,7 +32,6 @@
         .pendente { background: #f8d7da; color: #721c24; }
         #btn-apagar-geral { background: var(--danger); color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; display: none; font-weight: bold; }
         
-        /* Botão Consolidação */
         .btn-consolidado { background: #3498db; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; margin-bottom: 15px; display: inline-flex; align-items: center; gap: 8px; }
 
         #modal-alerta {
@@ -209,19 +208,19 @@
         const mins = parseInt(document.getElementById('tempo-padrao').value) || 10;
         const crianca = document.getElementById('nome-crianca').value || "Cliente";
         const responsavel = document.getElementById('nome-responsavel').value || "Não informado";
-        const agora = new Date();
-        const fimEstimado = new Date(agora.getTime() + mins * 60000);
+        const agora = Date.now();
+        const fimTimestamp = agora + (mins * 60 * 1000);
         
         await addDoc(collection(db, "ativos"), {
             veiculo, crianca, responsavel,
-            segundosRestantes: mins * 60,
+            fimTimestamp: fimTimestamp,
             totalMinsContratados: mins,
-            inicio: agora.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-            previsaoFim: fimEstimado.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+            inicio: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+            previsaoFim: new Date(fimTimestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
             pago: document.getElementById('pg-status').value,
             pausado: false, 
             notificado: false,
-            timestamp: Date.now()
+            timestamp: agora
         });
         document.getElementById('nome-crianca').value = "";
         document.getElementById('nome-responsavel').value = "";
@@ -266,29 +265,34 @@
                 container.insertAdjacentHTML('beforeend', cardHtml);
                 
                 timersLocais[id] = {
-                    segundos: data.segundosRestantes,
-                    pausado: data.pausado,
                     notificado: data.notificado,
                     interval: setInterval(() => {
-                        if (!timersLocais[id].pausado && timersLocais[id].segundos > 0) {
-                            timersLocais[id].segundos--;
+                        const snapAtual = snap.docs.find(d => d.id === id);
+                        if(!snapAtual) return;
+                        const d = snapAtual.data();
+                        
+                        if (!d.pausado) {
+                            const agora = Date.now();
+                            const segundosRestantes = Math.max(0, Math.floor((d.fimTimestamp - agora) / 1000));
+                            
                             const el = document.getElementById(`timer-${id}`);
                             if(el) {
-                                const m = Math.floor(timersLocais[id].segundos / 60);
-                                const s = (timersLocais[id].segundos % 60).toString().padStart(2, '0');
+                                const m = Math.floor(segundosRestantes / 60);
+                                const s = (segundosRestantes % 60).toString().padStart(2, '0');
                                 el.innerText = `${m}:${s}`;
                             }
-                            if (timersLocais[id].segundos <= 0) {
+
+                            if (segundosRestantes <= 0) {
                                 document.getElementById(`card-${id}`).classList.add('expired');
                                 if(!timersLocais[id].notificado) {
-                                    dispararAlertaGlobal(id, data.veiculo, data.pago);
+                                    dispararAlertaGlobal(id, d.veiculo, d.pago);
+                                    timersLocais[id].notificado = true;
                                 }
                             }
                         }
                     }, 1000)
                 };
             } else {
-                timersLocais[id].pausado = data.pausado;
                 const b = document.getElementById(`btn-p-${id}`);
                 if(b) b.innerText = data.pausado ? "▶" : "⏸";
                 filaAlertas.forEach(a => { if(a.id === id) a.pago = data.pago; });
@@ -300,7 +304,6 @@
     });
 
     function dispararAlertaGlobal(id, veiculo, pago) {
-        timersLocais[id].notificado = true;
         filaAlertas.push({ id, veiculo, pago });
         if (document.getElementById('modal-alerta').style.display !== 'block') {
             processarProximoAlerta();
@@ -374,19 +377,41 @@
     };
 
     window.togglePausa = async (id) => {
-        const p = !timersLocais[id].pausado;
-        timersLocais[id].pausado = p;
-        await updateDoc(doc(db, "ativos", id), { pausado: p });
+        const s = await getDocs(collection(db, "ativos"));
+        const d = s.docs.find(x => x.id === id).data();
+        const agora = Date.now();
+        
+        if (!d.pausado) {
+            // Pausando: salva quanto tempo ainda restava
+            const restava = d.fimTimestamp - agora;
+            await updateDoc(doc(db, "ativos", id), { pausado: true, milisegundosRestantesNaPausa: restava });
+        } else {
+            // Despausando: define novo fimTimestamp baseado no que restava
+            const novoFim = agora + d.milisegundosRestantesNaPausa;
+            await updateDoc(doc(db, "ativos", id), { 
+                pausado: false, 
+                fimTimestamp: novoFim,
+                previsaoFim: new Date(novoFim).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
+            });
+        }
     };
 
-    window.ajustar = async (id, s) => {
-        timersLocais[id].segundos = Math.max(0, timersLocais[id].segundos + s);
-        if(timersLocais[id].segundos > 0) {
+    window.ajustar = async (id, seg) => {
+        const s = await getDocs(collection(db, "ativos"));
+        const d = s.docs.find(x => x.id === id).data();
+        const novoFim = d.fimTimestamp + (seg * 1000);
+        
+        if(novoFim > Date.now()) {
             timersLocais[id].notificado = false;
             document.getElementById(`card-${id}`).classList.remove('expired');
             filaAlertas = filaAlertas.filter(a => a.id !== id);
         }
-        await updateDoc(doc(db, "ativos", id), { segundosRestantes: timersLocais[id].segundos });
+        
+        await updateDoc(doc(db, "ativos", id), { 
+            fimTimestamp: novoFim,
+            previsaoFim: new Date(novoFim).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+            notificado: false
+        });
     };
 
     window.finalizar = async (id) => {
@@ -394,12 +419,16 @@
         const docAtivo = s.docs.find(x => x.id === id);
         if(!docAtivo) return;
         const d = docAtivo.data();
-        const agora = new Date();
-        const usado = Math.ceil(((d.totalMinsContratados * 60) - timersLocais[id].segundos) / 60);
+        const agora = Date.now();
+        
+        // Calcula quanto tempo foi realmente usado
+        const decorridoMs = agora - d.timestamp;
+        const usadoMins = Math.ceil(decorridoMs / 60000);
+
         await addDoc(collection(db, "historico"), {
             veiculo: d.veiculo, crianca: d.crianca, responsavel: d.responsavel,
-            tempo: Math.max(1, usado), inicio: d.inicio, 
-            fimReal: agora.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+            tempo: Math.max(1, usadoMins), inicio: d.inicio, 
+            fimReal: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
             pago: d.pago, operador: usuarioAtivo, data: Date.now()
         });
         await deleteDoc(doc(db, "ativos", id));
