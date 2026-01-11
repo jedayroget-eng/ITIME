@@ -28,7 +28,7 @@
         .pago { background: #d4edda; color: #155724; }
         .pendente { background: #f8d7da; color: #721c24; }
         .history { margin-top: 30px; background: white; padding: 20px; border-radius: 12px; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
         .total-row { background: #f8f9fa; font-weight: bold; font-size: 16px; }
 
@@ -115,12 +115,12 @@
         </div>
         <table id="tabela-hist">
             <thead>
-                <tr><th>Brinquedo</th><th>Criança</th><th>Tempo</th><th>Valor</th><th>Status</th></tr>
+                <tr><th>Brinquedo</th><th>Criança</th><th>Início</th><th>Fim</th><th>Tempo</th><th>Valor</th><th>Status</th></tr>
             </thead>
             <tbody></tbody>
             <tfoot>
                 <tr class="total-row">
-                    <td colspan="3" style="text-align:right">Soma Total:</td>
+                    <td colspan="5" style="text-align:right">Soma Total:</td>
                     <td id="valor-total-hist" colspan="2">R$ 0,00</td>
                 </tr>
             </tfoot>
@@ -207,12 +207,12 @@
     window.confirmarImpressao = () => {
         window.print();
         const btnFechar = document.getElementById('btn-cancelar-ticket');
-        btnFechar.innerText = "AGUARDE 20s...";
+        btnFechar.innerText = "AGUARDE 10s...";
         btnFechar.disabled = true;
         setTimeout(() => {
             btnFechar.innerText = "FECHAR";
             btnFechar.disabled = false;
-        }, 20000);
+        }, 10000);
     };
 
     window.abrirTicket = async (id) => {
@@ -228,9 +228,21 @@
         const snap = await getDoc(doc(db, "ativos", id));
         if (!snap.exists()) return;
         const d = snap.data();
-        const tempo = Math.max(1, Math.floor((Date.now() - d.timestamp)/60000));
+        const agora = Date.now();
+        const tempo = Math.max(1, Math.floor((agora - d.timestamp)/60000));
+        
+        const inicioFormat = new Date(d.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        const fimFormat = new Date(agora).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
         await addDoc(collection(db, "historico"), {
-            veiculo: d.veiculo, crianca: d.crianca, tempo, valor: tempo, pago: d.pago, data: Date.now()
+            veiculo: d.veiculo, 
+            crianca: d.crianca, 
+            inicio: inicioFormat,
+            fim: fimFormat,
+            tempo, 
+            valor: tempo, 
+            pago: d.pago, 
+            data: agora
         });
         await deleteDoc(doc(db, "ativos", id));
         const aviso = document.getElementById(`aviso-${id}`);
@@ -291,6 +303,7 @@
             const badge = document.getElementById(`pg-${id}`);
             badge.innerText = d.pago === 'Sim' ? 'PAGO' : 'PENDENTE';
             badge.className = `badge ${d.pago === 'Sim' ? 'pago' : 'pendente'}`;
+            badge.onclick = () => window.alternarPg(id, d.pago);
 
             if (window[`int-${id}`]) clearInterval(window[`int-${id}`]);
             window[`int-${id}`] = setInterval(() => {
@@ -316,7 +329,7 @@
                                     <p style="font-size:20px; font-weight:bold; margin:10px 0;">${d.veiculo}</p>
                                     <p>${d.crianca}</p>
                                     <div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:10px; margin-bottom:10px;">
-                                        PAGAMENTO: <span class="badge ${d.pago === 'Sim' ? 'pago' : 'pendente'}" id="aviso-pg-${id}" onclick="window.alternarPg('${id}', '${d.pago}')">${d.pago === 'Sim' ? 'PAGO' : 'PENDENTE'}</span>
+                                        PAGAMENTO: <span class="badge" id="aviso-pg-${id}"></span>
                                     </div>
                                     <button class="btn-vencido" style="background:#2ecc71; color:white;" onclick="window.finalizar('${id}')">FINALIZAR</button>
                                 </div>
@@ -327,6 +340,7 @@
                     if(pgAviso) {
                         pgAviso.innerText = d.pago === 'Sim' ? 'PAGO' : 'PENDENTE';
                         pgAviso.className = `badge ${d.pago === 'Sim' ? 'pago' : 'pendente'}`;
+                        pgAviso.onclick = () => window.alternarPg(id, d.pago);
                     }
                 } else {
                     card.classList.remove('expired');
@@ -349,6 +363,8 @@
             tb.innerHTML += `<tr>
                 <td>${h.veiculo}</td>
                 <td>${h.crianca}</td>
+                <td>${h.inicio || '--:--'}</td>
+                <td>${h.fim || '--:--'}</td>
                 <td>${h.tempo}m</td>
                 <td>R$ ${valor.toFixed(2).replace('.',',')}</td>
                 <td>
