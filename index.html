@@ -108,6 +108,7 @@
             <button class="btn-time" onclick="window.setQuickTime(5)">5m</button>
             <button class="btn-time" onclick="window.setQuickTime(10)">10m</button>
             <button class="btn-time" onclick="window.setQuickTime(15)">15m</button>
+            <button class="btn-time" style="background: #34495e; color: white;" onclick="window.setQuickTime(9999)">∞ Livre</button>
             <input type="number" id="tempo-padrao" value="10" style="width: 70px; text-align: center;">
             <select id="pg-status" style="width: 130px;">
                 <option value="Não">PENDENTE</option>
@@ -205,25 +206,36 @@
     window.setQuickTime = (v) => document.getElementById('tempo-padrao').value = v;
 
     window.iniciar = async (veiculo) => {
-        const mins = parseInt(document.getElementById('tempo-padrao').value) || 10;
+        const inputTempo = document.getElementById('tempo-padrao').value;
+        const mins = parseInt(inputTempo) || 10;
+        const ehLivre = mins >= 9999;
+        
         const crianca = document.getElementById('nome-crianca').value || "Cliente";
         const responsavel = document.getElementById('nome-responsavel').value || "Não informado";
         const agora = Date.now();
         const fimTimestamp = agora + (mins * 60 * 1000);
-        
+        const previsaoTexto = ehLivre ? "Uso Livre" : new Date(fimTimestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
         await addDoc(collection(db, "ativos"), {
             veiculo, crianca, responsavel,
             fimTimestamp: fimTimestamp,
             totalMinsContratados: mins,
             inicio: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-            previsaoFim: new Date(fimTimestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+            previsaoFim: previsaoTexto,
             pago: document.getElementById('pg-status').value,
             pausado: false, 
             notificado: false,
-            timestamp: agora
+            timestamp: agora,
+            modalidadeLivre: ehLivre
         });
         document.getElementById('nome-crianca').value = "";
         document.getElementById('nome-responsavel').value = "";
+        document.getElementById('tempo-padrao').value = "10";
+    };
+
+    window.alternarPagamentoCard = async (id, statusAtual) => {
+        const novoStatus = statusAtual === 'Sim' ? 'Não' : 'Sim';
+        await updateDoc(doc(db, "ativos", id), { pago: novoStatus });
     };
 
     onSnapshot(collection(db, "ativos"), (snap) => {
@@ -247,7 +259,12 @@
             if (!timersLocais[id]) {
                 const cardHtml = `
                     <div class="card" id="card-${id}">
-                        <div style="display:flex; justify-content:space-between"><b>${data.veiculo}</b></div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <b>${data.veiculo}</b>
+                            <span id="badge-card-${id}" class="badge ${data.pago === 'Sim' ? 'pago' : 'pendente'}" style="cursor:pointer; font-size:10px;" onclick="window.alternarPagamentoCard('${id}', '${data.pago}')">
+                                ${data.pago === 'Sim' ? 'PAGO' : 'PENDENTE'}
+                            </span>
+                        </div>
                         <div style="font-size:38px; font-weight:bold; margin:5px 0;" id="timer-${id}">--:--</div>
                         <div style="font-size:13px; line-height:1.4">
                             <b>Criança:</b> ${data.crianca}<br>
@@ -273,20 +290,26 @@
                         
                         if (!d.pausado) {
                             const agora = Date.now();
-                            const segundosRestantes = Math.max(0, Math.floor((d.fimTimestamp - agora) / 1000));
-                            
                             const el = document.getElementById(`timer-${id}`);
-                            if(el) {
-                                const m = Math.floor(segundosRestantes / 60);
-                                const s = (segundosRestantes % 60).toString().padStart(2, '0');
-                                el.innerText = `${m}:${s}`;
-                            }
 
-                            if (segundosRestantes <= 0) {
-                                document.getElementById(`card-${id}`).classList.add('expired');
-                                if(!timersLocais[id].notificado) {
-                                    dispararAlertaGlobal(id, d.veiculo, d.pago);
-                                    timersLocais[id].notificado = true;
+                            if (d.modalidadeLivre) {
+                                const decorrido = Math.floor((agora - d.timestamp) / 1000);
+                                const m = Math.floor(decorrido / 60);
+                                const s = (decorrido % 60).toString().padStart(2, '0');
+                                if(el) el.innerText = `∞ ${m}:${s}`;
+                            } else {
+                                const segundosRestantes = Math.max(0, Math.floor((d.fimTimestamp - agora) / 1000));
+                                if(el) {
+                                    const m = Math.floor(segundosRestantes / 60);
+                                    const s = (segundosRestantes % 60).toString().padStart(2, '0');
+                                    el.innerText = `${m}:${s}`;
+                                }
+                                if (segundosRestantes <= 0) {
+                                    document.getElementById(`card-${id}`).classList.add('expired');
+                                    if(!timersLocais[id].notificado) {
+                                        dispararAlertaGlobal(id, d.veiculo, d.pago);
+                                        timersLocais[id].notificado = true;
+                                    }
                                 }
                             }
                         }
@@ -295,6 +318,14 @@
             } else {
                 const b = document.getElementById(`btn-p-${id}`);
                 if(b) b.innerText = data.pausado ? "▶" : "⏸";
+                
+                const badgeCard = document.getElementById(`badge-card-${id}`);
+                if (badgeCard) {
+                    badgeCard.innerText = data.pago === 'Sim' ? 'PAGO' : 'PENDENTE';
+                    badgeCard.className = `badge ${data.pago === 'Sim' ? 'pago' : 'pendente'}`;
+                    badgeCard.setAttribute('onclick', `window.alternarPagamentoCard('${id}', '${data.pago}')`);
+                }
+
                 filaAlertas.forEach(a => { if(a.id === id) a.pago = data.pago; });
                 if(filaAlertas.length > 0 && filaAlertas[0].id === id) {
                     atualizarVisualBotaoModal(data.pago);
@@ -382,16 +413,14 @@
         const agora = Date.now();
         
         if (!d.pausado) {
-            // Pausando: salva quanto tempo ainda restava
             const restava = d.fimTimestamp - agora;
             await updateDoc(doc(db, "ativos", id), { pausado: true, milisegundosRestantesNaPausa: restava });
         } else {
-            // Despausando: define novo fimTimestamp baseado no que restava
             const novoFim = agora + d.milisegundosRestantesNaPausa;
             await updateDoc(doc(db, "ativos", id), { 
                 pausado: false, 
                 fimTimestamp: novoFim,
-                previsaoFim: new Date(novoFim).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
+                previsaoFim: d.modalidadeLivre ? "Uso Livre" : new Date(novoFim).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
             });
         }
     };
@@ -409,7 +438,7 @@
         
         await updateDoc(doc(db, "ativos", id), { 
             fimTimestamp: novoFim,
-            previsaoFim: new Date(novoFim).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+            previsaoFim: d.modalidadeLivre ? "Uso Livre" : new Date(novoFim).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
             notificado: false
         });
     };
@@ -421,13 +450,13 @@
         const d = docAtivo.data();
         const agora = Date.now();
         
-        // Calcula quanto tempo foi realmente usado
         const decorridoMs = agora - d.timestamp;
-        const usadoMins = Math.ceil(decorridoMs / 60000);
+        const usadoMins = Math.floor(decorridoMs / 60000);
+        const tempoFinal = Math.max(1, usadoMins);
 
         await addDoc(collection(db, "historico"), {
             veiculo: d.veiculo, crianca: d.crianca, responsavel: d.responsavel,
-            tempo: Math.max(1, usadoMins), inicio: d.inicio, 
+            tempo: tempoFinal, inicio: d.inicio, 
             fimReal: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
             pago: d.pago, operador: usuarioAtivo, data: Date.now()
         });
