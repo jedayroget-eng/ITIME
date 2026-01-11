@@ -54,15 +54,8 @@
         }
 
         .footer-creditos {
-            text-align: center;
-            font-size: 12px;
-            padding: 20px 0;
-            width: 100%;
-            color: #777;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 5px;
+            text-align: center; font-size: 12px; padding: 20px 0; width: 100%; color: #777;
+            display: flex; justify-content: center; align-items: center; gap: 5px;
         }
         #login-screen .footer-creditos { color: rgba(255,255,255,0.7); position: absolute; bottom: 20px; }
         .wa-icon { width: 14px; height: 14px; vertical-align: middle; }
@@ -209,7 +202,6 @@
         const inputTempo = document.getElementById('tempo-padrao').value;
         const mins = parseInt(inputTempo) || 10;
         const ehLivre = mins >= 9999;
-        
         const crianca = document.getElementById('nome-crianca').value || "Cliente";
         const responsavel = document.getElementById('nome-responsavel').value || "Não informado";
         const agora = Date.now();
@@ -217,16 +209,12 @@
         const previsaoTexto = ehLivre ? "Uso Livre" : new Date(fimTimestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 
         await addDoc(collection(db, "ativos"), {
-            veiculo, crianca, responsavel,
-            fimTimestamp: fimTimestamp,
+            veiculo, crianca, responsavel, fimTimestamp,
             totalMinsContratados: mins,
             inicio: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
             previsaoFim: previsaoTexto,
             pago: document.getElementById('pg-status').value,
-            pausado: false, 
-            notificado: false,
-            timestamp: agora,
-            modalidadeLivre: ehLivre
+            pausado: false, notificado: false, timestamp: agora, modalidadeLivre: ehLivre
         });
         document.getElementById('nome-crianca').value = "";
         document.getElementById('nome-responsavel').value = "";
@@ -234,8 +222,7 @@
     };
 
     window.alternarPagamentoCard = async (id, statusAtual) => {
-        const novoStatus = statusAtual === 'Sim' ? 'Não' : 'Sim';
-        await updateDoc(doc(db, "ativos", id), { pago: novoStatus });
+        await updateDoc(doc(db, "ativos", id), { pago: statusAtual === 'Sim' ? 'Não' : 'Sim' });
     };
 
     onSnapshot(collection(db, "ativos"), (snap) => {
@@ -255,7 +242,6 @@
         snap.docs.forEach(docSnap => {
             const data = docSnap.data();
             const id = docSnap.id;
-
             if (!timersLocais[id]) {
                 const cardHtml = `
                     <div class="card" id="card-${id}">
@@ -280,18 +266,15 @@
                         </div>
                     </div>`;
                 container.insertAdjacentHTML('beforeend', cardHtml);
-                
                 timersLocais[id] = {
                     notificado: data.notificado,
                     interval: setInterval(() => {
                         const snapAtual = snap.docs.find(d => d.id === id);
                         if(!snapAtual) return;
                         const d = snapAtual.data();
-                        
                         if (!d.pausado) {
                             const agora = Date.now();
                             const el = document.getElementById(`timer-${id}`);
-
                             if (d.modalidadeLivre) {
                                 const decorrido = Math.floor((agora - d.timestamp) / 1000);
                                 const m = Math.floor(decorrido / 60);
@@ -318,27 +301,21 @@
             } else {
                 const b = document.getElementById(`btn-p-${id}`);
                 if(b) b.innerText = data.pausado ? "▶" : "⏸";
-                
                 const badgeCard = document.getElementById(`badge-card-${id}`);
                 if (badgeCard) {
                     badgeCard.innerText = data.pago === 'Sim' ? 'PAGO' : 'PENDENTE';
                     badgeCard.className = `badge ${data.pago === 'Sim' ? 'pago' : 'pendente'}`;
                     badgeCard.setAttribute('onclick', `window.alternarPagamentoCard('${id}', '${data.pago}')`);
                 }
-
                 filaAlertas.forEach(a => { if(a.id === id) a.pago = data.pago; });
-                if(filaAlertas.length > 0 && filaAlertas[0].id === id) {
-                    atualizarVisualBotaoModal(data.pago);
-                }
+                if(filaAlertas.length > 0 && filaAlertas[0].id === id) atualizarVisualBotaoModal(data.pago);
             }
         });
     });
 
     function dispararAlertaGlobal(id, veiculo, pago) {
         filaAlertas.push({ id, veiculo, pago });
-        if (document.getElementById('modal-alerta').style.display !== 'block') {
-            processarProximoAlerta();
-        }
+        if (document.getElementById('modal-alerta').style.display !== 'block') processarProximoAlerta();
         if (notificacaoPermitida) new Notification("TEMPO ACABOU: " + veiculo);
         new Audio('https://actions.google.com/sounds/v1/alarms/alarm_clock_ringing_beep.ogg').play();
     }
@@ -371,13 +348,9 @@
     };
 
     window.fecharAlerta = () => {
-        filaAlertas.shift(); 
-        document.getElementById('modal-alerta').style.display = 'none';
-        if (filaAlertas.length > 0) {
-            setTimeout(processarProximoAlerta, 300);
-        } else {
-            document.getElementById('overlay-alerta').style.display = 'none';
-        }
+        filaAlertas.shift(); document.getElementById('modal-alerta').style.display = 'none';
+        if (filaAlertas.length > 0) setTimeout(processarProximoAlerta, 300);
+        else document.getElementById('overlay-alerta').style.display = 'none';
     };
 
     window.imprimir = async (id) => {
@@ -386,8 +359,9 @@
         if(!docAtivo) return;
         const d = docAtivo.data();
         const statusPagamento = d.pago === 'Sim' ? 'PAGO' : 'PENDENTE';
-        const w = window.open('', '', 'width=300,height=400');
-        w.document.write(`<html><body onload="window.print();window.close()"><div style="font-family:monospace;width:58mm;font-size:12px;">
+        
+        const w = window.open('', '', 'width=600,height=600');
+        const conteudo = `<html><body style="margin:0;padding:20px;"><div style="font-family:monospace;width:58mm;font-size:12px;">
             <center>🌲 CEDRO AVENTURAS 🌲</center><br>
             ----------------------------<br>
             <b>VEÍCULO: ${d.veiculo}</b><br>
@@ -403,23 +377,29 @@
             Operador: ${usuarioAtivo}<br>
             Data: ${new Date().toLocaleDateString()}<br>
             <center>Obrigado pela preferência!</center>
-        </div></body></html>`);
+        </div></body></html>`;
+        
+        w.document.write(conteudo);
         w.document.close();
+        w.focus();
+
+        // Pausa de segurança para o Chrome não crashar
+        setTimeout(() => {
+            w.print();
+            w.close();
+        }, 500);
     };
 
     window.togglePausa = async (id) => {
         const s = await getDocs(collection(db, "ativos"));
         const d = s.docs.find(x => x.id === id).data();
         const agora = Date.now();
-        
         if (!d.pausado) {
-            const restava = d.fimTimestamp - agora;
-            await updateDoc(doc(db, "ativos", id), { pausado: true, milisegundosRestantesNaPausa: restava });
+            await updateDoc(doc(db, "ativos", id), { pausado: true, milisegundosRestantesNaPausa: d.fimTimestamp - agora });
         } else {
             const novoFim = agora + d.milisegundosRestantesNaPausa;
             await updateDoc(doc(db, "ativos", id), { 
-                pausado: false, 
-                fimTimestamp: novoFim,
+                pausado: false, fimTimestamp: novoFim,
                 previsaoFim: d.modalidadeLivre ? "Uso Livre" : new Date(novoFim).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
             });
         }
@@ -429,17 +409,14 @@
         const s = await getDocs(collection(db, "ativos"));
         const d = s.docs.find(x => x.id === id).data();
         const novoFim = d.fimTimestamp + (seg * 1000);
-        
         if(novoFim > Date.now()) {
             timersLocais[id].notificado = false;
             document.getElementById(`card-${id}`).classList.remove('expired');
             filaAlertas = filaAlertas.filter(a => a.id !== id);
         }
-        
         await updateDoc(doc(db, "ativos", id), { 
-            fimTimestamp: novoFim,
-            previsaoFim: d.modalidadeLivre ? "Uso Livre" : new Date(novoFim).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-            notificado: false
+            fimTimestamp: novoFim, notificado: false,
+            previsaoFim: d.modalidadeLivre ? "Uso Livre" : new Date(novoFim).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
         });
     };
 
@@ -448,16 +425,11 @@
         const docAtivo = s.docs.find(x => x.id === id);
         if(!docAtivo) return;
         const d = docAtivo.data();
-        const agora = Date.now();
-        
-        const decorridoMs = agora - d.timestamp;
-        const usadoMins = Math.floor(decorridoMs / 60000);
-        const tempoFinal = Math.max(1, usadoMins);
-
+        const decorridoMs = Date.now() - d.timestamp;
+        const tempoFinal = Math.max(1, Math.floor(decorridoMs / 60000));
         await addDoc(collection(db, "historico"), {
             veiculo: d.veiculo, crianca: d.crianca, responsavel: d.responsavel,
-            tempo: tempoFinal, inicio: d.inicio, 
-            fimReal: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+            tempo: tempoFinal, inicio: d.inicio, fimReal: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
             pago: d.pago, operador: usuarioAtivo, data: Date.now()
         });
         await deleteDoc(doc(db, "ativos", id));
@@ -465,34 +437,21 @@
 
     onSnapshot(query(collection(db, "historico"), orderBy("data", "desc")), (snap) => {
         const tbody = document.querySelector("#tabela-hist tbody");
-        tbody.innerHTML = "";
-        let total = 0;
+        tbody.innerHTML = ""; let total = 0;
         snap.forEach(docSnap => {
-            const h = docSnap.data();
-            total += h.tempo;
-            tbody.innerHTML += `<tr>
-                <td>${h.veiculo}</td>
-                <td>${h.crianca}<br><small>Resp: ${h.responsavel}</small></td>
-                <td>${h.inicio} às ${h.fimReal}</td>
-                <td>${h.tempo}m</td>
-                <td>R$ ${h.tempo},00</td>
-                <td><span class="badge ${h.pago === 'Sim' ? 'pago' : 'pendente'}" onclick="window.altStatus('${docSnap.id}','${h.pago}')">${h.pago === 'Sim' ? 'PAGO' : 'PENDENTE'}</span></td>
-            </tr>`;
+            const h = docSnap.data(); total += h.tempo;
+            tbody.innerHTML += `<tr><td>${h.veiculo}</td><td>${h.crianca}<br><small>Resp: ${h.responsavel}</small></td><td>${h.inicio} às ${h.fimReal}</td><td>${h.tempo}m</td><td>R$ ${h.tempo},00</td><td><span class="badge ${h.pago === 'Sim' ? 'pago' : 'pendente'}" onclick="window.altStatus('${docSnap.id}','${h.pago}')">${h.pago === 'Sim' ? 'PAGO' : 'PENDENTE'}</span></td></tr>`;
         });
         document.getElementById('total-valor').innerText = `R$ ${total},00`;
     });
 
     window.altStatus = async (id, s) => await updateDoc(doc(db, "historico", id), { pago: s === 'Sim' ? 'Não' : 'Sim' });
-
     window.limparHistoricoGeral = async () => {
         if(confirm("Deseja apagar o relatório completo do dia?")) {
             const s = await getDocs(collection(db, "historico"));
-            const b = writeBatch(db);
-            s.forEach(d => b.delete(d.ref));
-            await b.commit();
+            const b = writeBatch(db); s.forEach(d => b.delete(d.ref)); await b.commit();
         }
     };
-
     setInterval(() => { document.getElementById('relogio').innerText = new Date().toLocaleTimeString(); }, 1000);
 </script>
 </body>
