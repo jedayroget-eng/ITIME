@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cedro Aventuras - V9.8</title>
+    <title>Cedro Aventuras - V11.6</title>
     <style>
-        :root { --primary: #2d5a27; --danger: #e74c3c; --bg: #f0f2f5; --insta: #8e44ad; --pago: #27ae60; --pendente: #c0392b; }
+        :root { --primary: #2d5a27; --danger: #e74c3c; --bg: #f0f2f5; --insta: #8e44ad; --pago: #27ae60; --pendente: #c0392b; --zap: #25d366; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding-bottom: 60px; }
         
         #ticket-area { background: #333; color: white; padding: 12px; border-radius: 0 0 15px 15px; margin-bottom: 15px; text-align: center; }
@@ -20,18 +20,13 @@
 
         #login-screen { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; background: var(--primary); position: fixed; width: 100%; z-index: 2000; }
         .login-box { background: white; padding: 30px; border-radius: 15px; width: 300px; text-align: center; }
-        input, select { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        input { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
         .btn-entrar { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
         
         #app-screen { display: none; padding: 15px; }
         header { background: white; padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .panel { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         
-        .status-selector { display: flex; gap: 10px; margin: 10px 0; }
-        .btn-status-opt { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-weight: bold; cursor: pointer; background: #eee; color: #777; }
-        .btn-status-opt.active-pendente { border-color: var(--pendente); background: var(--pendente); color: white; }
-        .btn-status-opt.active-pago { border-color: var(--pago); background: var(--pago); color: white; }
-
         .grid-veiculos { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
         .v-btn { padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; }
         .time-controls { display: flex; gap: 5px; margin: 10px 0; align-items: center; }
@@ -41,7 +36,8 @@
         .card { background: white; padding: 15px; border-radius: 10px; border-left: 8px solid var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: relative; }
         .card.paused { border-left-color: #f1c40f; background: #fffdf5; }
         .card.expired { border-left-color: var(--danger); animation: blink 1s infinite; }
-        
+        @keyframes blink { 50% { border-left-color: transparent; } }
+
         .insta-badge-card { background: var(--insta); color: white; font-size: 10px; padding: 2px 8px; border-radius: 4px; position: absolute; top: 10px; right: 10px; font-weight: bold; }
 
         .btn-status-card { width: 100%; padding: 10px; margin: 10px 0 5px 0; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
@@ -50,13 +46,15 @@
 
         .btn-card { padding: 10px 5px; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; flex: 1; margin: 2px; font-size: 11px; }
         .badge { padding: 4px 8px; border-radius: 20px; font-size: 10px; font-weight: bold; cursor: pointer; border: none; }
-        .pago { background: #d4edda; color: #155724; }
-        .pendente { background: #f8d7da; color: #721c24; }
+        .pago { background: #27ae60; color: white; }
+        .pendente { background: #c0392b; color: white; }
 
         .history { margin-top: 30px; background: white; padding: 15px; border-radius: 12px; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 600px; }
-        th, td { padding: 8px 4px; text-align: left; border-bottom: 1px solid #eee; }
-        .total-row { background: #f8f9fa; font-weight: bold; font-size: 13px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 20px; }
+        th, td { padding: 10px 5px; text-align: left; border-bottom: 1px solid #eee; }
+        .total-row { background: #f8f9fa; font-weight: bold; }
+        .divider { height: 2px; background: #ddd; margin: 30px 0; }
+        .btn-whatsapp { background: var(--zap); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -74,8 +72,8 @@
 
 <div id="app-screen">
     <div id="ticket-area">
-        <div style="font-size: 12px; font-weight: bold;">🎫 VENDA DE INGRESSO</div>
-        <button class="btn-imprimir-ticket" onclick="window.gerarTicket()">GERAR TICKET AGORA</button>
+        <button class="btn-imprimir-ticket" onclick="window.gerarTicket()">🎫 GERAR TICKET AGORA</button>
+        <button onclick="window.limparCardsGeral()" style="background:none; border:none; color:#999; font-size:10px; cursor:pointer; margin-top:5px;">⚠️ Limpar Cards Travados</button>
     </div>
 
     <header>
@@ -99,12 +97,7 @@
             <input type="number" id="tempo-padrao" value="10" style="width: 60px; text-align: center; border-radius:8px; border:1px solid #ccc; padding: 8px;">
         </div>
 
-        <div class="status-selector">
-            <button id="opt-pendente" class="btn-status-opt active-pendente" onclick="window.setStatusPre('Não')">🔴 PENDENTE</button>
-            <button id="opt-pago" class="btn-status-opt" onclick="window.setStatusPre('Sim')">🟢 PAGO</button>
-        </div>
-
-        <button id="bonus-toggle" class="btn-insta-bonus" style="background: #eee; border: 2px solid var(--insta); color: var(--insta); padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 5px;" onclick="window.toggleInstaPre()">📸 APLICAR BÔNUS INSTAGRAM (+20%)</button>
+        <button id="bonus-toggle" style="background: #eee; border: 2px solid var(--insta); color: var(--insta); padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 5px;" onclick="window.toggleInstaPre()">📸 APLICAR BÔNUS INSTAGRAM (+20%)</button>
         
         <div class="grid-veiculos" style="margin-top: 15px;">
             <button class="v-btn" style="background:#95a5a6" onclick="window.iniciar('Carrinho Branco')">🚗 Carrinho B.</button>
@@ -119,9 +112,20 @@
     <div class="cards-area" id="container-cards"></div>
 
     <div class="history">
-        <h3>📊 Relatório Financeiro</h3>
-        <select id="filtro-brinquedo" onchange="window.renderizarTabela()" style="margin-bottom: 15px; border: 2px solid var(--primary);">
-            <option value="Todos">🔍 Filtrar por Brinquedo: TODOS</option>
+        <h3>📊 1. Resumo por Brinquedo (WhatsApp)</h3>
+        <button class="btn-whatsapp" onclick="window.exportarZap()">🚀 ENVIAR RESUMO (ZAP)</button>
+        <table id="tabela-agrupada">
+            <thead>
+                <tr><th>Brinquedo</th><th>Tempo Total</th><th>Valor Total</th></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <div class="divider"></div>
+
+        <h3>📝 2. Relatório Detalhado (Histórico)</h3>
+        <select id="filtro-brinquedo" onchange="window.renderizarTabelas()" style="margin-bottom: 10px; width: 100%; padding: 10px; border-radius: 8px;">
+            <option value="Todos">Filtrar: TODOS</option>
             <option value="Carrinho Branco">Carrinho Branco</option>
             <option value="Carrinho Vermelho">Carrinho Vermelho</option>
             <option value="Triciclo Amarelo">Triciclo Amarelo</option>
@@ -130,24 +134,24 @@
             <option value="Patinete">Patinete</option>
         </select>
 
-        <table id="tabela-hist">
+        <table id="tabela-detalhada">
             <thead>
                 <tr>
                     <th>Brinquedo</th>
                     <th>Criança</th>
-                    <th>Horário</th>
-                    <th>Vendido</th>
-                    <th>Uso Real</th>
-                    <th>Valor (R$)</th>
+                    <th>Horários</th>
+                    <th>Uso</th>
+                    <th>R$</th>
                     <th>Status</th>
                 </tr>
             </thead>
             <tbody></tbody>
             <tfoot>
-                <tr class="total-row"><td colspan="5" style="text-align:right">Total Filtrado:</td><td id="valor-total-hist" colspan="2">R$ 0,00</td></tr>
+                <tr class="total-row"><td colspan="4" style="text-align:right">Total:</td><td id="valor-total-detalhado" colspan="2">R$ 0,00</td></tr>
             </tfoot>
         </table>
-        <button onclick="window.limparRelatorio()" style="background:#ff4757; color:white; border:none; padding:12px; border-radius:8px; margin-top:15px; width:100%; font-weight:bold;">LIMPAR TUDO</button>
+
+        <button onclick="window.limparRelatorio()" style="background:#ff4757; color:white; border:none; padding:12px; border-radius:8px; width:100%; font-weight:bold;">LIMPAR HISTÓRICO</button>
     </div>
 </div>
 
@@ -166,18 +170,7 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    let statusPre = "Não", bonusAtivo = false, dadosHistorico = [];
-
-    window.gerarTicket = () => {
-        const crianca = document.getElementById('nome-crianca').value || "Cliente";
-        const tempoSugerido = document.getElementById('tempo-padrao').value;
-        const tempoFinal = prompt("Confirme os minutos para o Ticket:", tempoSugerido);
-        if (tempoFinal === null) return;
-        const avisoInsta = bonusAtivo ? `<p>⭐ BÔNUS INSTAGRAM: Ativado (+20%)</p>` : "";
-        const layout = `<div style="text-align:center; font-family:monospace; padding:10px;"><h2>CEDRO AVENTURAS</h2><hr><p>INGRESSO</p><p>Criança: ${crianca}</p><p>Tempo: ${tempoFinal} min</p>${avisoInsta}<p>Status: ${statusPre === 'Sim' ? 'PAGO' : 'PENDENTE'}</p><hr><p>${new Date().toLocaleString()}</p></div>`;
-        document.getElementById('print-section').innerHTML = layout;
-        window.print();
-    };
+    let bonusAtivo = false, dadosHistorico = [];
 
     window.tentarLogin = () => {
         if (document.getElementById('pass').value === "1234") {
@@ -185,12 +178,6 @@
             document.getElementById('app-screen').style.display = 'block';
             document.getElementById('op-nome').innerText = "Op: " + (document.getElementById('user').value || "Jeday");
         } else alert("Senha incorreta!");
-    };
-
-    window.setStatusPre = (s) => {
-        statusPre = s;
-        document.getElementById('opt-pendente').classList.toggle('active-pendente', s === 'Não');
-        document.getElementById('opt-pago').classList.toggle('active-pago', s === 'Sim');
     };
 
     window.toggleInstaPre = () => {
@@ -206,21 +193,17 @@
     window.iniciar = async (veiculo) => {
         const minsOriginal = parseInt(document.getElementById('tempo-padrao').value) || 10;
         const ehLivre = minsOriginal >= 9999, agora = Date.now();
-        let minsFinal = minsOriginal;
-        if(bonusAtivo && !ehLivre) minsFinal = minsOriginal * 1.2;
+        let minsFinal = bonusAtivo && !ehLivre ? minsOriginal * 1.2 : minsOriginal;
 
         await addDoc(collection(db, "ativos"), {
-            veiculo, 
-            crianca: document.getElementById('nome-crianca').value || "Cliente",
-            timestamp: agora,
-            fimTimestamp: agora + (minsFinal * 60 * 1000),
-            pago: statusPre, pausado: false, modalidadeLivre: ehLivre,
+            veiculo, crianca: document.getElementById('nome-crianca').value || "Cliente",
+            timestamp: agora, fimTimestamp: agora + (minsFinal * 60 * 1000),
+            pago: "Não", pausado: false, modalidadeLivre: ehLivre,
             msRestantes: (minsFinal * 60 * 1000), totalMsPausado: 0,
-            tempoVendido: ehLivre ? "Livre" : minsOriginal,
-            bonusInsta: bonusAtivo
+            tempoVendido: ehLivre ? "Livre" : minsOriginal, bonusInsta: bonusAtivo
         });
-        if(bonusAtivo) window.toggleInstaPre();
         document.getElementById('nome-crianca').value = "";
+        if(bonusAtivo) window.toggleInstaPre();
     };
 
     window.finalizar = async (id) => {
@@ -230,38 +213,21 @@
         let pausaExtra = d.pausado ? (agora - d.ultimoPause) : 0;
         const tempoRealMs = (agora - d.timestamp) - ((d.totalMsPausado || 0) + pausaExtra);
         const tempoRealMins = Math.max(1, Math.floor(tempoRealMs / 60000));
+        
         await addDoc(collection(db, "historico"), {
             veiculo: d.veiculo, crianca: d.crianca, 
             inicio: new Date(d.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
             fim: new Date(agora).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-            tempoVendido: d.tempoVendido,
             tempoReal: tempoRealMins, valor: tempoRealMins, pago: d.pago, data: agora
         });
         await deleteDoc(doc(db, "ativos", id));
-    };
-
-    window.alternarPagamentoCard = async (id) => {
-        const r = doc(db, "ativos", id), s = await getDoc(r);
-        if (s.exists()) await updateDoc(r, { pago: s.data().pago === 'Sim' ? 'Não' : 'Sim' });
-    };
-
-    window.alternarPagamentoHist = async (id) => {
-        const r = doc(db, "historico", id), s = await getDoc(r);
-        if (s.exists()) await updateDoc(r, { pago: s.data().pago === 'Sim' ? 'Não' : 'Sim' });
-    };
-
-    window.togglePausa = async (id) => {
-        const r = doc(db, "ativos", id), s = await getDoc(r);
-        if (!s.exists()) return;
-        const d = s.data(), agora = Date.now();
-        if (!d.pausado) await updateDoc(r, { pausado: true, msRestantes: d.fimTimestamp - agora, ultimoPause: agora });
-        else await updateDoc(r, { pausado: false, fimTimestamp: agora + d.msRestantes, totalMsPausado: (d.totalMsPausado || 0) + (agora - d.ultimoPause) });
     };
 
     onSnapshot(collection(db, "ativos"), (snap) => {
         const container = document.getElementById('container-cards');
         const idsNoBanco = snap.docs.map(d => d.id);
         document.querySelectorAll('.card').forEach(c => { if(!idsNoBanco.includes(c.id.replace('card-',''))) c.remove(); });
+        
         snap.docs.forEach(docSnap => {
             const d = docSnap.data(), id = docSnap.id;
             let card = document.getElementById(`card-${id}`);
@@ -271,9 +237,8 @@
                         ${d.bonusInsta ? '<div class="insta-badge-card">📸 INSTA (+20%)</div>' : ''}
                         <b style="font-size:14px">${d.veiculo}</b>
                         <div id="timer-${id}" style="font-size:38px; font-weight:bold; margin:5px 0;">00:00</div>
-                        <div class="info-linha">Criança: <b>${d.crianca}</b></div>
-                        <div class="info-linha">Vendido: <b>${d.tempoVendido} min</b></div>
-                        <div class="info-linha"><span class="saida-badge" id="saida-${id}"></span></div>
+                        <div style="font-size:12px">Criança: <b>${d.crianca}</b></div>
+                        <div style="font-size:11px" id="saida-${id}"></div>
                         <button class="btn-status-card" id="st-${id}" onclick="window.alternarPagamentoCard('${id}')"></button>
                         <div style="display:flex;">
                             <button class="btn-card" style="background:green" onclick="window.ajustar('${id}', 60)">+1m</button>
@@ -290,6 +255,7 @@
             document.getElementById(`btn-p-${id}`).innerText = d.pausado ? '▶' : '⏸';
             card.classList.toggle('paused', d.pausado);
             document.getElementById(`saida-${id}`).innerText = d.modalidadeLivre ? 'Saída: Livre' : `Saída: ${new Date(d.fimTimestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`;
+
             if (window[`int-${id}`]) clearInterval(window[`int-${id}`]);
             window[`int-${id}`] = setInterval(() => {
                 const tEl = document.getElementById(`timer-${id}`);
@@ -301,31 +267,12 @@
         });
     });
 
-    window.renderizarTabela = () => {
-        const tb = document.querySelector("#tabela-hist tbody");
-        const filtro = document.getElementById('filtro-brinquedo').value;
-        tb.innerHTML = ""; let soma = 0;
-        dadosHistorico.forEach(h => {
-            if (filtro === "Todos" || h.veiculo === filtro) {
-                soma += parseFloat(h.valor);
-                tb.innerHTML += `<tr>
-                    <td>${h.veiculo}</td>
-                    <td>${h.crianca}</td>
-                    <td>${h.inicio}-${h.fim}</td>
-                    <td>${h.tempoVendido}m</td>
-                    <td style="color:blue; font-weight:bold">${h.tempoReal}m</td>
-                    <td>R$ ${parseFloat(h.valor).toFixed(2)}</td>
-                    <td><button class="badge ${h.pago === 'Sim' ? 'pago' : 'pendente'}" onclick="window.alternarPagamentoHist('${h.id}')">${h.pago === 'Sim' ? 'PAGO' : 'PENDENTE'}</button></td>
-                </tr>`;
-            }
-        });
-        document.getElementById('valor-total-hist').innerText = `R$ ${soma.toFixed(2)}`;
+    window.togglePausa = async (id) => {
+        const r = doc(db, "ativos", id), s = await getDoc(r);
+        const d = s.data(), agora = Date.now();
+        if (!d.pausado) await updateDoc(r, { pausado: true, msRestantes: d.fimTimestamp - agora, ultimoPause: agora });
+        else await updateDoc(r, { pausado: false, fimTimestamp: agora + d.msRestantes, totalMsPausado: (d.totalMsPausado || 0) + (agora - d.ultimoPause) });
     };
-
-    onSnapshot(query(collection(db, "historico"), orderBy("data", "desc")), (snap) => {
-        dadosHistorico = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        window.renderizarTabela();
-    });
 
     window.ajustar = async (id, seg) => {
         const r = doc(db, "ativos", id), s = await getDoc(r), d = s.data();
@@ -333,6 +280,62 @@
         else await updateDoc(r, { fimTimestamp: d.fimTimestamp + (seg * 1000) });
     };
 
+    window.renderizarTabelas = () => {
+        const filtro = document.getElementById('filtro-brinquedo').value;
+        const tbAg = document.querySelector("#tabela-agrupada tbody");
+        tbAg.innerHTML = "";
+        const resumo = {};
+        dadosHistorico.forEach(h => {
+            if (!resumo[h.veiculo]) resumo[h.veiculo] = { min: 0, val: 0 };
+            resumo[h.veiculo].min += h.tempoReal;
+            resumo[h.veiculo].val += h.valor;
+        });
+        for (let v in resumo) tbAg.innerHTML += `<tr><td>${v}</td><td>${resumo[v].min}m</td><td>R$ ${resumo[v].val.toFixed(2)}</td></tr>`;
+
+        const tbDet = document.querySelector("#tabela-detalhada tbody");
+        tbDet.innerHTML = "";
+        let somaDet = 0;
+        dadosHistorico.forEach(h => {
+            if (filtro === "Todos" || h.veiculo === filtro) {
+                somaDet += h.valor;
+                tbDet.innerHTML += `<tr>
+                    <td>${h.veiculo}</td><td>${h.crianca}</td><td>${h.inicio}-${h.fim}</td><td>${h.tempoReal}m</td>
+                    <td>R$ ${h.valor.toFixed(2)}</td>
+                    <td><button class="badge ${h.pago==='Sim'?'pago':'pendente'}" onclick="window.alternarPagamentoHist('${h.id}')">${h.pago==='Sim'?'PAGO':'PENDENTE'}</button></td>
+                </tr>`;
+            }
+        });
+        document.getElementById('valor-total-detalhado').innerText = `R$ ${somaDet.toFixed(2)}`;
+    };
+
+    onSnapshot(query(collection(db, "historico"), orderBy("data", "desc")), (snap) => {
+        dadosHistorico = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        window.renderizarTabelas();
+    });
+
+    window.alternarPagamentoCard = async (id) => {
+        const r = doc(db, "ativos", id), s = await getDoc(r);
+        await updateDoc(r, { pago: s.data().pago === 'Sim' ? 'Não' : 'Sim' });
+    };
+
+    window.alternarPagamentoHist = async (id) => {
+        const r = doc(db, "historico", id), s = await getDoc(r);
+        await updateDoc(r, { pago: s.data().pago === 'Sim' ? 'Não' : 'Sim' });
+    };
+
+    window.exportarZap = () => {
+        let texto = `🌲 *CEDRO AVENTURAS - RESUMO*\n--------------------------------\n`;
+        const resumo = {}; let total = 0;
+        dadosHistorico.forEach(h => {
+            if (!resumo[h.veiculo]) resumo[h.veiculo] = { min: 0, val: 0 };
+            resumo[h.veiculo].min += h.tempoReal; resumo[h.veiculo].val += h.valor; total += h.valor;
+        });
+        for (let v in resumo) texto += `🚗 *${v}*\n⏱ ${resumo[v].min} min | R$ ${resumo[v].val.toFixed(2)}\n\n`;
+        texto += `--------------------------------\n*TOTAL: R$ ${total.toFixed(2)}*`;
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`);
+    };
+
+    window.limparCardsGeral = async () => { if(confirm("Limpar ativos?")) { const s = await getDocs(collection(db, "ativos")), b = writeBatch(db); s.forEach(d => b.delete(d.ref)); await b.commit(); } };
     window.limparRelatorio = async () => { if(confirm("Limpar histórico?")) { const s = await getDocs(collection(db, "historico")), b = writeBatch(db); s.forEach(d => b.delete(d.ref)); await b.commit(); } };
     setInterval(() => { document.getElementById('relogio').innerText = new Date().toLocaleTimeString(); }, 1000);
 </script>
