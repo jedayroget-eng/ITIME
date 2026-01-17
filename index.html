@@ -3,64 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cedro Aventuras - V3 Final</title>
+    <title>Cedro Aventuras - V9.8</title>
     <style>
-        :root { --primary: #2d5a27; --danger: #e74c3c; --bg: #f0f2f5; }
+        :root { --primary: #2d5a27; --danger: #e74c3c; --bg: #f0f2f5; --insta: #8e44ad; --pago: #27ae60; --pendente: #c0392b; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding-bottom: 60px; }
+        
+        #ticket-area { background: #333; color: white; padding: 12px; border-radius: 0 0 15px 15px; margin-bottom: 15px; text-align: center; }
+        .btn-imprimir-ticket { background: #fff; color: #333; border: none; padding: 8px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 90%; font-size: 14px; margin-top: 5px; }
+        
+        #print-section { display: none; }
+        @media print {
+            body * { visibility: hidden; }
+            #print-section, #print-section * { visibility: visible; }
+            #print-section { display: block; position: absolute; left: 0; top: 0; width: 100%; font-family: monospace; }
+        }
+
         #login-screen { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; background: var(--primary); position: fixed; width: 100%; z-index: 2000; }
         .login-box { background: white; padding: 30px; border-radius: 15px; width: 300px; text-align: center; }
         input, select { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
         .btn-entrar { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        
         #app-screen { display: none; padding: 15px; }
         header { background: white; padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .panel { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        
+        .status-selector { display: flex; gap: 10px; margin: 10px 0; }
+        .btn-status-opt { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-weight: bold; cursor: pointer; background: #eee; color: #777; }
+        .btn-status-opt.active-pendente { border-color: var(--pendente); background: var(--pendente); color: white; }
+        .btn-status-opt.active-pago { border-color: var(--pago); background: var(--pago); color: white; }
+
         .grid-veiculos { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
         .v-btn { padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; }
-        .time-controls { display: flex; gap: 5px; align-items: center; margin: 10px 0; }
+        .time-controls { display: flex; gap: 5px; margin: 10px 0; align-items: center; }
         .btn-time { background: #ddd; border: none; padding: 10px; border-radius: 8px; cursor: pointer; flex: 1; font-weight: bold; }
+        
         .cards-area { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 15px; }
-        .card { background: white; padding: 15px; border-radius: 10px; border-left: 8px solid var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .card { background: white; padding: 15px; border-radius: 10px; border-left: 8px solid var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: relative; }
         .card.paused { border-left-color: #f1c40f; background: #fffdf5; }
         .card.expired { border-left-color: var(--danger); animation: blink 1s infinite; }
-        @keyframes blink { 50% { opacity: 0.7; } }
-        .btn-card { padding: 10px 5px; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; flex: 1; margin: 2px; font-size: 12px; }
-        .badge { padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; cursor: pointer; border: none; }
+        
+        .insta-badge-card { background: var(--insta); color: white; font-size: 10px; padding: 2px 8px; border-radius: 4px; position: absolute; top: 10px; right: 10px; font-weight: bold; }
+
+        .btn-status-card { width: 100%; padding: 10px; margin: 10px 0 5px 0; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
+        .status-pago { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .status-pendente { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+        .btn-card { padding: 10px 5px; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; flex: 1; margin: 2px; font-size: 11px; }
+        .badge { padding: 4px 8px; border-radius: 20px; font-size: 10px; font-weight: bold; cursor: pointer; border: none; }
         .pago { background: #d4edda; color: #155724; }
         .pendente { background: #f8d7da; color: #721c24; }
-        .history { margin-top: 30px; background: white; padding: 20px; border-radius: 12px; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
-        .total-row { background: #f8f9fa; font-weight: bold; font-size: 16px; }
 
-        #container-avisos { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10000; display: flex; justify-content: center; align-items: center; }
-        .modal-vencido-box { pointer-events: auto; background: #ff0000; color: white; padding: 25px; width: 90%; max-width: 350px; border-radius: 20px; text-align: center; border: 5px solid white; position: absolute; box-shadow: 0 0 50px rgba(0,0,0,0.5); animation: alert-pulse 0.5s infinite; }
-        @keyframes alert-pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
-        .close-x { position: absolute; top: 10px; right: 15px; font-size: 24px; font-weight: bold; cursor: pointer; color: white; }
-        .btn-vencido { width: 100%; padding: 12px; margin-top: 8px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; }
-
-        #modal-ticket { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 6000; justify-content: center; align-items: center; }
-        .ticket-content { background: white; padding: 20px; width: 250px; font-family: monospace; text-align: left; border-radius: 5px; }
-        .btn-imprimir-final { width: 100%; background: #222; color: white; padding: 15px; border: none; margin-top: 15px; cursor: pointer; font-weight: bold; }
-
-        @media print {
-            body * { visibility: hidden; }
-            #ticket-imprimir, #ticket-imprimir * { visibility: visible; }
-            #ticket-imprimir { position: absolute; left: 0; top: 0; width: 58mm; }
-            .no-print { display: none !important; }
-        }
+        .history { margin-top: 30px; background: white; padding: 15px; border-radius: 12px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 600px; }
+        th, td { padding: 8px 4px; text-align: left; border-bottom: 1px solid #eee; }
+        .total-row { background: #f8f9fa; font-weight: bold; font-size: 13px; }
     </style>
 </head>
 <body>
 
-<audio id="som-alerta" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
-
-<div id="modal-ticket">
-    <div class="ticket-content" id="ticket-imprimir">
-        <div id="ticket-corpo"></div>
-        <button class="btn-imprimir-final no-print" onclick="window.confirmarImpressao()">CONFIRMAR IMPRESSÃO</button>
-        <button id="btn-cancelar-ticket" class="btn-imprimir-final no-print" style="background:#888" onclick="document.getElementById('modal-ticket').style.display='none'">FECHAR</button>
-    </div>
-</div>
+<div id="print-section"></div>
 
 <div id="login-screen">
     <div class="login-box">
@@ -71,9 +72,12 @@
     </div>
 </div>
 
-<div id="container-avisos"></div>
-
 <div id="app-screen">
+    <div id="ticket-area">
+        <div style="font-size: 12px; font-weight: bold;">🎫 VENDA DE INGRESSO</div>
+        <button class="btn-imprimir-ticket" onclick="window.gerarTicket()">GERAR TICKET AGORA</button>
+    </div>
+
     <header>
         <div id="op-nome" style="font-weight: bold;">Op: ---</div>
         <div id="relogio" style="font-size: 18px; font-family: monospace;">00:00:00</div>
@@ -85,23 +89,29 @@
             <input type="text" id="nome-crianca" placeholder="Criança">
             <input type="text" id="nome-responsavel" placeholder="Responsável">
         </div>
+        
         <div class="time-controls">
             <button class="btn-time" onclick="window.setQuickTime(5)">5m</button>
             <button class="btn-time" onclick="window.setQuickTime(10)">10m</button>
             <button class="btn-time" onclick="window.setQuickTime(15)">15m</button>
+            <button class="btn-time" onclick="window.setQuickTime(20)">20m</button>
             <button class="btn-time" style="background:#34495e; color:white" onclick="window.setQuickTime(9999)">∞ Livre</button>
-            <input type="number" id="tempo-padrao" value="10" style="width: 60px; text-align: center;">
-            <select id="pg-status" style="width: 110px;">
-                <option value="Não">PENDENTE</option>
-                <option value="Sim">PAGO</option>
-            </select>
+            <input type="number" id="tempo-padrao" value="10" style="width: 60px; text-align: center; border-radius:8px; border:1px solid #ccc; padding: 8px;">
         </div>
-        <div class="grid-veiculos">
-            <button class="v-btn" style="background:#95a5a6" onclick="window.iniciar('Branco')">🚗 Branco</button>
-            <button class="v-btn" style="background:#c0392b" onclick="window.iniciar('Vermelho')">🚗 Vermelho</button>
-            <button class="v-btn" style="background:#f1c40f; color:black" onclick="window.iniciar('Amarelo')">🚲 Amarelo</button>
+
+        <div class="status-selector">
+            <button id="opt-pendente" class="btn-status-opt active-pendente" onclick="window.setStatusPre('Não')">🔴 PENDENTE</button>
+            <button id="opt-pago" class="btn-status-opt" onclick="window.setStatusPre('Sim')">🟢 PAGO</button>
+        </div>
+
+        <button id="bonus-toggle" class="btn-insta-bonus" style="background: #eee; border: 2px solid var(--insta); color: var(--insta); padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 5px;" onclick="window.toggleInstaPre()">📸 APLICAR BÔNUS INSTAGRAM (+20%)</button>
+        
+        <div class="grid-veiculos" style="margin-top: 15px;">
+            <button class="v-btn" style="background:#95a5a6" onclick="window.iniciar('Carrinho Branco')">🚗 Carrinho B.</button>
+            <button class="v-btn" style="background:#c0392b" onclick="window.iniciar('Carrinho Vermelho')">🚗 Carrinho V.</button>
+            <button class="v-btn" style="background:#f1c40f; color:black" onclick="window.iniciar('Triciclo Amarelo')">🚲 Tric. Amarelo</button>
             <button class="v-btn" style="background:#ecf0f1; color:black; border: 1px solid #ccc;" onclick="window.iniciar('Triciclo Branco')">🚲 Tric. Branco</button>
-            <button class="v-btn" style="background:#e082ac" onclick="window.iniciar('Rosa')">🚲 Rosa</button>
+            <button class="v-btn" style="background:#e082ac" onclick="window.iniciar('Triciclo Rosa')">🚲 Tric. Rosa</button>
             <button class="v-btn" style="background:#34495e" onclick="window.iniciar('Patinete')">🛴 Patinete</button>
         </div>
     </div>
@@ -109,22 +119,35 @@
     <div class="cards-area" id="container-cards"></div>
 
     <div class="history">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h3>📊 Histórico</h3>
-            <button onclick="window.limparRelatorio()" style="background:red; color:white; border:none; padding:5px 10px; border-radius:5px;">LIMPAR</button>
-        </div>
+        <h3>📊 Relatório Financeiro</h3>
+        <select id="filtro-brinquedo" onchange="window.renderizarTabela()" style="margin-bottom: 15px; border: 2px solid var(--primary);">
+            <option value="Todos">🔍 Filtrar por Brinquedo: TODOS</option>
+            <option value="Carrinho Branco">Carrinho Branco</option>
+            <option value="Carrinho Vermelho">Carrinho Vermelho</option>
+            <option value="Triciclo Amarelo">Triciclo Amarelo</option>
+            <option value="Triciclo Branco">Triciclo Branco</option>
+            <option value="Triciclo Rosa">Triciclo Rosa</option>
+            <option value="Patinete">Patinete</option>
+        </select>
+
         <table id="tabela-hist">
             <thead>
-                <tr><th>Brinquedo</th><th>Criança</th><th>Início</th><th>Fim</th><th>Tempo</th><th>Valor</th><th>Status</th></tr>
+                <tr>
+                    <th>Brinquedo</th>
+                    <th>Criança</th>
+                    <th>Horário</th>
+                    <th>Vendido</th>
+                    <th>Uso Real</th>
+                    <th>Valor (R$)</th>
+                    <th>Status</th>
+                </tr>
             </thead>
             <tbody></tbody>
             <tfoot>
-                <tr class="total-row">
-                    <td colspan="5" style="text-align:right">Soma Total:</td>
-                    <td id="valor-total-hist" colspan="2">R$ 0,00</td>
-                </tr>
+                <tr class="total-row"><td colspan="5" style="text-align:right">Total Filtrado:</td><td id="valor-total-hist" colspan="2">R$ 0,00</td></tr>
             </tfoot>
         </table>
+        <button onclick="window.limparRelatorio()" style="background:#ff4757; color:white; border:none; padding:12px; border-radius:8px; margin-top:15px; width:100%; font-weight:bold;">LIMPAR TUDO</button>
     </div>
 </div>
 
@@ -143,241 +166,174 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const avisadosLocal = new Set();
+    let statusPre = "Não", bonusAtivo = false, dadosHistorico = [];
+
+    window.gerarTicket = () => {
+        const crianca = document.getElementById('nome-crianca').value || "Cliente";
+        const tempoSugerido = document.getElementById('tempo-padrao').value;
+        const tempoFinal = prompt("Confirme os minutos para o Ticket:", tempoSugerido);
+        if (tempoFinal === null) return;
+        const avisoInsta = bonusAtivo ? `<p>⭐ BÔNUS INSTAGRAM: Ativado (+20%)</p>` : "";
+        const layout = `<div style="text-align:center; font-family:monospace; padding:10px;"><h2>CEDRO AVENTURAS</h2><hr><p>INGRESSO</p><p>Criança: ${crianca}</p><p>Tempo: ${tempoFinal} min</p>${avisoInsta}<p>Status: ${statusPre === 'Sim' ? 'PAGO' : 'PENDENTE'}</p><hr><p>${new Date().toLocaleString()}</p></div>`;
+        document.getElementById('print-section').innerHTML = layout;
+        window.print();
+    };
 
     window.tentarLogin = () => {
-        const u = document.getElementById('user').value;
-        const p = document.getElementById('pass').value;
-        if (p === "1234" || u === "Jeday") {
+        if (document.getElementById('pass').value === "1234") {
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('app-screen').style.display = 'block';
-            document.getElementById('op-nome').innerText = "Op: " + u;
-            window.usuarioAtivo = u;
-        } else { alert("Senha incorreta!"); }
+            document.getElementById('op-nome').innerText = "Op: " + (document.getElementById('user').value || "Jeday");
+        } else alert("Senha incorreta!");
+    };
+
+    window.setStatusPre = (s) => {
+        statusPre = s;
+        document.getElementById('opt-pendente').classList.toggle('active-pendente', s === 'Não');
+        document.getElementById('opt-pago').classList.toggle('active-pago', s === 'Sim');
+    };
+
+    window.toggleInstaPre = () => {
+        bonusAtivo = !bonusAtivo;
+        const btn = document.getElementById('bonus-toggle');
+        btn.style.background = bonusAtivo ? "var(--insta)" : "#eee";
+        btn.style.color = bonusAtivo ? "white" : "var(--insta)";
+        btn.innerText = bonusAtivo ? "✅ BÔNUS ATIVADO" : "📸 APLICAR BÔNUS INSTAGRAM (+20%)";
     };
 
     window.setQuickTime = (v) => document.getElementById('tempo-padrao').value = v;
 
-    window.ajustar = async (id, segundos) => {
-        const docRef = doc(db, "ativos", id);
-        const snap = await getDoc(docRef);
-        if (!snap.exists()) return;
-        const data = snap.data();
-        const ms = segundos * 1000;
-        if (data.pausado) {
-            await updateDoc(docRef, { msRestantes: (data.msRestantes || 0) + ms });
-        } else {
-            const novoFim = (data.fimTimestamp || Date.now()) + ms;
-            await updateDoc(docRef, { fimTimestamp: novoFim });
-        }
-        avisadosLocal.delete(id);
-    };
-
-    window.togglePausa = async (id, statusAtual) => {
-        const docRef = doc(db, "ativos", id);
-        const agora = Date.now();
-        const snap = await getDoc(docRef);
-        if (!statusAtual) {
-            const restava = snap.data().fimTimestamp - agora;
-            await updateDoc(docRef, { pausado: true, msRestantes: restava });
-        } else {
-            const novoFim = agora + snap.data().msRestantes;
-            await updateDoc(docRef, { pausado: false, fimTimestamp: novoFim });
-        }
-    };
-
     window.iniciar = async (veiculo) => {
-        const mins = parseInt(document.getElementById('tempo-padrao').value) || 10;
-        const ehLivre = mins >= 9999;
-        const agora = Date.now();
+        const minsOriginal = parseInt(document.getElementById('tempo-padrao').value) || 10;
+        const ehLivre = minsOriginal >= 9999, agora = Date.now();
+        let minsFinal = minsOriginal;
+        if(bonusAtivo && !ehLivre) minsFinal = minsOriginal * 1.2;
+
         await addDoc(collection(db, "ativos"), {
             veiculo, 
             crianca: document.getElementById('nome-crianca').value || "Cliente",
-            responsavel: document.getElementById('nome-responsavel').value || "---",
-            fimTimestamp: agora + (mins * 60 * 1000),
             timestamp: agora,
-            pago: document.getElementById('pg-status').value,
-            pausado: false,
-            modalidadeLivre: ehLivre,
-            msRestantes: (mins * 60 * 1000)
+            fimTimestamp: agora + (minsFinal * 60 * 1000),
+            pago: statusPre, pausado: false, modalidadeLivre: ehLivre,
+            msRestantes: (minsFinal * 60 * 1000), totalMsPausado: 0,
+            tempoVendido: ehLivre ? "Livre" : minsOriginal,
+            bonusInsta: bonusAtivo
         });
+        if(bonusAtivo) window.toggleInstaPre();
         document.getElementById('nome-crianca').value = "";
-    };
-
-    window.confirmarImpressao = () => {
-        window.print();
-        const btnFechar = document.getElementById('btn-cancelar-ticket');
-        btnFechar.innerText = "AGUARDE 10s...";
-        btnFechar.disabled = true;
-        setTimeout(() => {
-            btnFechar.innerText = "FECHAR";
-            btnFechar.disabled = false;
-        }, 10000);
-    };
-
-    window.abrirTicket = async (id) => {
-        const snap = await getDoc(doc(db, "ativos", id));
-        const d = snap.data();
-        const inicioStr = new Date(d.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-        const fimStr = d.modalidadeLivre ? "Livre" : new Date(d.fimTimestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-        document.getElementById('ticket-corpo').innerHTML = `<center>🌲 CEDRO AVENTURAS 🌲</center><br>----------------------------<br><b>VEÍCULO: ${d.veiculo}</b><br><b>CRIANÇA:</b> ${d.crianca.toUpperCase()}<br><b>RESP:</b> ${d.responsavel.toUpperCase()}<br><br><b>INÍCIO:</b> ${inicioStr}<br><b>FIM:</b> ${fimStr}<br><br><center><b>STATUS: ${d.pago === 'Sim' ? 'PAGO' : 'PENDENTE'}</b></center>----------------------------<br>Op: ${window.usuarioAtivo || 'Admin'}`;
-        document.getElementById('modal-ticket').style.display = 'flex';
     };
 
     window.finalizar = async (id) => {
         const snap = await getDoc(doc(db, "ativos", id));
         if (!snap.exists()) return;
-        const d = snap.data();
-        const agora = Date.now();
-        const tempo = Math.max(1, Math.floor((agora - d.timestamp)/60000));
-        
-        const inicioFormat = new Date(d.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-        const fimFormat = new Date(agora).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-
+        const d = snap.data(), agora = Date.now();
+        let pausaExtra = d.pausado ? (agora - d.ultimoPause) : 0;
+        const tempoRealMs = (agora - d.timestamp) - ((d.totalMsPausado || 0) + pausaExtra);
+        const tempoRealMins = Math.max(1, Math.floor(tempoRealMs / 60000));
         await addDoc(collection(db, "historico"), {
-            veiculo: d.veiculo, 
-            crianca: d.crianca, 
-            inicio: inicioFormat,
-            fim: fimFormat,
-            tempo, 
-            valor: tempo, 
-            pago: d.pago, 
-            data: agora
+            veiculo: d.veiculo, crianca: d.crianca, 
+            inicio: new Date(d.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+            fim: new Date(agora).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+            tempoVendido: d.tempoVendido,
+            tempoReal: tempoRealMins, valor: tempoRealMins, pago: d.pago, data: agora
         });
         await deleteDoc(doc(db, "ativos", id));
-        const aviso = document.getElementById(`aviso-${id}`);
-        if(aviso) aviso.remove();
     };
 
-    window.alternarPg = async (id, status) => {
-        await updateDoc(doc(db, "ativos", id), { pago: status === 'Sim' ? 'Não' : 'Sim' });
+    window.alternarPagamentoCard = async (id) => {
+        const r = doc(db, "ativos", id), s = await getDoc(r);
+        if (s.exists()) await updateDoc(r, { pago: s.data().pago === 'Sim' ? 'Não' : 'Sim' });
     };
 
-    window.mudarPgHist = async (id, status) => { 
-        await updateDoc(doc(db, "historico", id), { pago: status === 'Sim' ? 'Não' : 'Sim' }); 
+    window.alternarPagamentoHist = async (id) => {
+        const r = doc(db, "historico", id), s = await getDoc(r);
+        if (s.exists()) await updateDoc(r, { pago: s.data().pago === 'Sim' ? 'Não' : 'Sim' });
     };
 
-    window.limparRelatorio = async () => {
-        if(confirm("Limpar histórico?")){
-            const s = await getDocs(collection(db, "historico"));
-            const b = writeBatch(db);
-            s.forEach(d => b.delete(d.ref));
-            await b.commit();
-        }
+    window.togglePausa = async (id) => {
+        const r = doc(db, "ativos", id), s = await getDoc(r);
+        if (!s.exists()) return;
+        const d = s.data(), agora = Date.now();
+        if (!d.pausado) await updateDoc(r, { pausado: true, msRestantes: d.fimTimestamp - agora, ultimoPause: agora });
+        else await updateDoc(r, { pausado: false, fimTimestamp: agora + d.msRestantes, totalMsPausado: (d.totalMsPausado || 0) + (agora - d.ultimoPause) });
     };
 
     onSnapshot(collection(db, "ativos"), (snap) => {
         const container = document.getElementById('container-cards');
         const idsNoBanco = snap.docs.map(d => d.id);
-        document.querySelectorAll('.card').forEach(card => {
-            const id = card.id.replace('card-', '');
-            if (!idsNoBanco.includes(id)) card.remove();
-        });
-
+        document.querySelectorAll('.card').forEach(c => { if(!idsNoBanco.includes(c.id.replace('card-',''))) c.remove(); });
         snap.docs.forEach(docSnap => {
-            const d = docSnap.data();
-            const id = docSnap.id;
+            const d = docSnap.data(), id = docSnap.id;
             let card = document.getElementById(`card-${id}`);
-
             if (!card) {
                 container.insertAdjacentHTML('beforeend', `
                     <div class="card" id="card-${id}">
-                        <div style="display:flex; justify-content:space-between;">
-                            <b>${d.veiculo}</b>
-                            <span id="pg-${id}" class="badge" onclick="window.alternarPg('${id}', '${d.pago}')"></span>
-                        </div>
-                        <div id="timer-${id}" style="font-size:40px; font-weight:bold; margin:10px 0;">00:00</div>
-                        <div style="font-size:14px; margin-bottom:10px;">Criança: ${d.crianca}</div>
+                        ${d.bonusInsta ? '<div class="insta-badge-card">📸 INSTA (+20%)</div>' : ''}
+                        <b style="font-size:14px">${d.veiculo}</b>
+                        <div id="timer-${id}" style="font-size:38px; font-weight:bold; margin:5px 0;">00:00</div>
+                        <div class="info-linha">Criança: <b>${d.crianca}</b></div>
+                        <div class="info-linha">Vendido: <b>${d.tempoVendido} min</b></div>
+                        <div class="info-linha"><span class="saida-badge" id="saida-${id}"></span></div>
+                        <button class="btn-status-card" id="st-${id}" onclick="window.alternarPagamentoCard('${id}')"></button>
                         <div style="display:flex;">
                             <button class="btn-card" style="background:green" onclick="window.ajustar('${id}', 60)">+1m</button>
                             <button class="btn-card" style="background:orange" onclick="window.ajustar('${id}', -60)">-1m</button>
-                            <button class="btn-card" style="background:blue" id="btn-p-${id}">⏸</button>
-                            <button class="btn-card" style="background:#444" onclick="window.abrirTicket('${id}')">🖨️</button>
+                            <button class="btn-card" style="background:blue" id="btn-p-${id}" onclick="window.togglePausa('${id}')">⏸</button>
                             <button class="btn-card" style="background:red" onclick="window.finalizar('${id}')">FIM</button>
                         </div>
                     </div>
                 `);
                 card = document.getElementById(`card-${id}`);
             }
-
-            const badge = document.getElementById(`pg-${id}`);
-            badge.innerText = d.pago === 'Sim' ? 'PAGO' : 'PENDENTE';
-            badge.className = `badge ${d.pago === 'Sim' ? 'pago' : 'pendente'}`;
-            badge.onclick = () => window.alternarPg(id, d.pago);
-
+            document.getElementById(`st-${id}`).innerText = d.pago === 'Sim' ? '✅ PAGO' : '❌ PENDENTE';
+            document.getElementById(`st-${id}`).className = `btn-status-card ${d.pago === 'Sim' ? 'status-pago' : 'status-pendente'}`;
+            document.getElementById(`btn-p-${id}`).innerText = d.pausado ? '▶' : '⏸';
+            card.classList.toggle('paused', d.pausado);
+            document.getElementById(`saida-${id}`).innerText = d.modalidadeLivre ? 'Saída: Livre' : `Saída: ${new Date(d.fimTimestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`;
             if (window[`int-${id}`]) clearInterval(window[`int-${id}`]);
             window[`int-${id}`] = setInterval(() => {
                 const tEl = document.getElementById(`timer-${id}`);
-                const bP = document.getElementById(`btn-p-${id}`);
-                if (!tEl) return;
-                bP.onclick = () => window.togglePausa(id, d.pausado);
-                const s = d.pausado ? Math.max(0, Math.floor(d.msRestantes / 1000)) : (d.modalidadeLivre ? Math.floor((Date.now() - d.timestamp)/1000) : Math.max(0, Math.floor((d.fimTimestamp - Date.now())/1000)));
+                if(!tEl) return;
+                let s = d.pausado ? Math.max(0, Math.floor(d.msRestantes / 1000)) : (d.modalidadeLivre ? Math.floor((Date.now() - d.timestamp - (d.totalMsPausado || 0)) / 1000) : Math.max(0, Math.floor((d.fimTimestamp - Date.now()) / 1000)));
                 tEl.innerText = `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
-                bP.innerText = d.pausado ? '▶' : '⏸';
-
-                if (!d.modalidadeLivre && s <= 0) {
-                    card.classList.add('expired');
-                    if (!avisadosLocal.has(id)) {
-                        avisadosLocal.add(id);
-                        document.getElementById('som-alerta').play();
-                        const areaAvisos = document.getElementById('container-avisos');
-                        if(!document.getElementById(`aviso-${id}`)) {
-                            areaAvisos.insertAdjacentHTML('beforeend', `
-                                <div class="modal-vencido-box" id="aviso-${id}">
-                                    <span class="close-x" onclick="this.parentElement.remove()">×</span>
-                                    <h2 style="margin:0">TEMPO ESGOTADO!</h2>
-                                    <p style="font-size:20px; font-weight:bold; margin:10px 0;">${d.veiculo}</p>
-                                    <p>${d.crianca}</p>
-                                    <div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:10px; margin-bottom:10px;">
-                                        PAGAMENTO: <span class="badge" id="aviso-pg-${id}"></span>
-                                    </div>
-                                    <button class="btn-vencido" style="background:#2ecc71; color:white;" onclick="window.finalizar('${id}')">FINALIZAR</button>
-                                </div>
-                            `);
-                        }
-                    }
-                    const pgAviso = document.getElementById(`aviso-pg-${id}`);
-                    if(pgAviso) {
-                        pgAviso.innerText = d.pago === 'Sim' ? 'PAGO' : 'PENDENTE';
-                        pgAviso.className = `badge ${d.pago === 'Sim' ? 'pago' : 'pendente'}`;
-                        pgAviso.onclick = () => window.alternarPg(id, d.pago);
-                    }
-                } else {
-                    card.classList.remove('expired');
-                }
+                if (!d.modalidadeLivre && s <= 0) card.classList.add('expired'); else card.classList.remove('expired');
             }, 1000);
         });
     });
 
-    onSnapshot(query(collection(db, "historico"), orderBy("data", "desc")), (snap) => {
+    window.renderizarTabela = () => {
         const tb = document.querySelector("#tabela-hist tbody");
-        const totalEl = document.getElementById('valor-total-hist');
-        tb.innerHTML = "";
-        let somaTotal = 0;
-        
-        snap.forEach(docSnap => {
-            const h = docSnap.data();
-            const valor = parseFloat(h.valor) || 0;
-            somaTotal += valor;
-            
-            tb.innerHTML += `<tr>
-                <td>${h.veiculo}</td>
-                <td>${h.crianca}</td>
-                <td>${h.inicio || '--:--'}</td>
-                <td>${h.fim || '--:--'}</td>
-                <td>${h.tempo}m</td>
-                <td>R$ ${valor.toFixed(2).replace('.',',')}</td>
-                <td>
-                    <button class="badge ${h.pago === 'Sim' ? 'pago' : 'pendente'}" onclick="window.mudarPgHist('${docSnap.id}', '${h.pago}')">
-                        ${h.pago === 'Sim' ? 'PAGO' : 'PENDENTE'}
-                    </button>
-                </td>
-            </tr>`;
+        const filtro = document.getElementById('filtro-brinquedo').value;
+        tb.innerHTML = ""; let soma = 0;
+        dadosHistorico.forEach(h => {
+            if (filtro === "Todos" || h.veiculo === filtro) {
+                soma += parseFloat(h.valor);
+                tb.innerHTML += `<tr>
+                    <td>${h.veiculo}</td>
+                    <td>${h.crianca}</td>
+                    <td>${h.inicio}-${h.fim}</td>
+                    <td>${h.tempoVendido}m</td>
+                    <td style="color:blue; font-weight:bold">${h.tempoReal}m</td>
+                    <td>R$ ${parseFloat(h.valor).toFixed(2)}</td>
+                    <td><button class="badge ${h.pago === 'Sim' ? 'pago' : 'pendente'}" onclick="window.alternarPagamentoHist('${h.id}')">${h.pago === 'Sim' ? 'PAGO' : 'PENDENTE'}</button></td>
+                </tr>`;
+            }
         });
-        
-        totalEl.innerText = `R$ ${somaTotal.toFixed(2).replace('.',',')}`;
+        document.getElementById('valor-total-hist').innerText = `R$ ${soma.toFixed(2)}`;
+    };
+
+    onSnapshot(query(collection(db, "historico"), orderBy("data", "desc")), (snap) => {
+        dadosHistorico = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        window.renderizarTabela();
     });
 
+    window.ajustar = async (id, seg) => {
+        const r = doc(db, "ativos", id), s = await getDoc(r), d = s.data();
+        if (d.pausado) await updateDoc(r, { msRestantes: d.msRestantes + (seg * 1000) });
+        else await updateDoc(r, { fimTimestamp: d.fimTimestamp + (seg * 1000) });
+    };
+
+    window.limparRelatorio = async () => { if(confirm("Limpar histórico?")) { const s = await getDocs(collection(db, "historico")), b = writeBatch(db); s.forEach(d => b.delete(d.ref)); await b.commit(); } };
     setInterval(() => { document.getElementById('relogio').innerText = new Date().toLocaleTimeString(); }, 1000);
 </script>
 </body>
