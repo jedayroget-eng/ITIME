@@ -32,18 +32,26 @@
         .time-controls { display: flex; gap: 5px; margin: 10px 0; align-items: center; }
         .btn-time { background: #ddd; border: none; padding: 10px; border-radius: 8px; cursor: pointer; flex: 1; font-weight: bold; }
         
-        .cards-area { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 15px; }
-        .card { background: white; padding: 15px; border-radius: 10px; border-left: 8px solid var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: relative; }
+        .cards-area { display: flex; flex-wrap: wrap; gap: 15px; }
+        .card { background: white; padding: 15px; border-radius: 10px; border-left: 8px solid var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: relative; transition: 0.3s; width: 310px; order: 1; }
         .card.paused { border-left-color: #f1c40f; background: #fffdf5; }
-        .card.expired { border-left-color: var(--danger); animation: blink 1s infinite; }
-        @keyframes blink { 50% { border-left-color: transparent; } }
+        
+        .card.expired { 
+            border: 4px solid var(--danger); 
+            animation: pulse-red 1.5s infinite; 
+            background: #fff5f5;
+            order: -1 !important;
+        }
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0px rgba(231, 76, 60, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(231, 76, 60, 0); }
+            100% { box-shadow: 0 0 0 0px rgba(231, 76, 60, 0); }
+        }
 
         .insta-badge-card { background: var(--insta); color: white; font-size: 10px; padding: 2px 8px; border-radius: 4px; position: absolute; top: 10px; right: 10px; font-weight: bold; }
-
         .btn-status-card { width: 100%; padding: 10px; margin: 10px 0 5px 0; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
         .status-pago { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .status-pendente { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-
         .btn-card { padding: 10px 5px; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; flex: 1; margin: 2px; font-size: 11px; }
         .badge { padding: 4px 8px; border-radius: 20px; font-size: 10px; font-weight: bold; cursor: pointer; border: none; }
         .pago { background: #27ae60; color: white; }
@@ -52,6 +60,7 @@
         .history { margin-top: 30px; background: white; padding: 15px; border-radius: 12px; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 20px; }
         th, td { padding: 10px 5px; text-align: left; border-bottom: 1px solid #eee; }
+        .header-dia { background: #eee; font-weight: bold; text-align: center; color: #333; }
         .total-row { background: #f8f9fa; font-weight: bold; }
         .divider { height: 2px; background: #ddd; margin: 30px 0; }
         .btn-whatsapp { background: var(--zap); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
@@ -124,30 +133,27 @@
         <div class="divider"></div>
 
         <h3>📝 2. Relatório Detalhado (Histórico)</h3>
-        <select id="filtro-brinquedo" onchange="window.renderizarTabelas()" style="margin-bottom: 10px; width: 100%; padding: 10px; border-radius: 8px;">
-            <option value="Todos">Filtrar: TODOS</option>
-            <option value="Carrinho Branco">Carrinho Branco</option>
-            <option value="Carrinho Vermelho">Carrinho Vermelho</option>
-            <option value="Triciclo Amarelo">Triciclo Amarelo</option>
-            <option value="Triciclo Branco">Triciclo Branco</option>
-            <option value="Triciclo Rosa">Triciclo Rosa</option>
-            <option value="Patinete">Patinete</option>
-        </select>
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <select id="filtro-brinquedo" onchange="window.renderizarTabelas()" style="flex: 1; padding: 10px; border-radius: 8px;">
+                <option value="Todos">Filtrar: TODOS OS BRINQUEDOS</option>
+                <option value="Carrinho Branco">Carrinho Branco</option>
+                <option value="Carrinho Vermelho">Carrinho Vermelho</option>
+                <option value="Triciclo Amarelo">Triciclo Amarelo</option>
+                <option value="Triciclo Branco">Triciclo Branco</option>
+                <option value="Triciclo Rosa">Triciclo Rosa</option>
+                <option value="Patinete">Patinete</option>
+            </select>
+            <input type="date" id="filtro-data" onchange="window.renderizarTabelas()" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
+        </div>
 
         <table id="tabela-detalhada">
             <thead>
-                <tr>
-                    <th>Brinquedo</th>
-                    <th>Criança</th>
-                    <th>Horários</th>
-                    <th>Uso</th>
-                    <th>R$</th>
-                    <th>Status</th>
-                </tr>
+                <tr><th>Brinquedo</th><th>Criança</th><th>Horários</th><th>Uso</th><th>R$</th><th>Status</th></tr>
             </thead>
             <tbody></tbody>
             <tfoot>
-                <tr class="total-row"><td colspan="4" style="text-align:right">Total:</td><td id="valor-total-detalhado" colspan="2">R$ 0,00</td></tr>
+                <tr class="total-row"><td colspan="4" style="text-align:right">Total do Filtro:</td><td id="valor-total-detalhado" colspan="2">R$ 0,00</td></tr>
             </tfoot>
         </table>
 
@@ -170,7 +176,50 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    let bonusAtivo = false, dadosHistorico = [];
+    let bonusAtivo = false, dadosHistorico = [], alertasAtivos = {};
+
+    window.gerarTicket = () => {
+        const nome = document.getElementById('nome-crianca').value || "---";
+        const resp = document.getElementById('nome-responsavel').value || "---";
+        const tempo = document.getElementById('tempo-padrao').value;
+        const op = document.getElementById('op-nome').innerText;
+        const agora = new Date().toLocaleString();
+        
+        const printArea = document.getElementById('print-section');
+        printArea.innerHTML = `
+            <div style="width: 250px; padding: 10px; border: 1px dashed #000;">
+                <h2 style="text-align:center; margin:0">CEDRO AVENTURAS</h2>
+                <hr>
+                <p><b>Criança:</b> ${nome}</p>
+                <p><b>Responsável:</b> ${resp}</p>
+                <p><b>Tempo:</b> ${tempo} min ${bonusAtivo ? '(+20% Bônus)' : ''}</p>
+                <p><b>Data:</b> ${agora}</p>
+                <p><b>${op}</b></p>
+                <hr>
+                <p style="text-align:center; font-size:10px">Obrigado pela preferência!</p>
+            </div>
+        `;
+        window.print();
+    };
+
+    window.alertarFim = (veiculo) => {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = 440;
+        osc.start();
+        gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 1);
+        osc.stop(ctx.currentTime + 1);
+
+        const msg = new SpeechSynthesisUtterance();
+        msg.text = `${veiculo} acabou!`;
+        msg.lang = 'pt-BR';
+        window.speechSynthesis.speak(msg);
+    };
+
+    if (Notification.permission !== 'granted') Notification.requestPermission();
 
     window.tentarLogin = () => {
         if (document.getElementById('pass').value === "1234") {
@@ -226,6 +275,7 @@
     onSnapshot(collection(db, "ativos"), (snap) => {
         const container = document.getElementById('container-cards');
         const idsNoBanco = snap.docs.map(d => d.id);
+        Object.keys(alertasAtivos).forEach(id => { if(!idsNoBanco.includes(id)) delete alertasAtivos[id]; });
         document.querySelectorAll('.card').forEach(c => { if(!idsNoBanco.includes(c.id.replace('card-',''))) c.remove(); });
         
         snap.docs.forEach(docSnap => {
@@ -261,8 +311,21 @@
                 const tEl = document.getElementById(`timer-${id}`);
                 if(!tEl) return;
                 let s = d.pausado ? Math.max(0, Math.floor(d.msRestantes / 1000)) : (d.modalidadeLivre ? Math.floor((Date.now() - d.timestamp - (d.totalMsPausado || 0)) / 1000) : Math.max(0, Math.floor((d.fimTimestamp - Date.now()) / 1000)));
+                
+                if (d.modalidadeLivre) card.style.order = "999999";
+                else card.style.order = s;
+
                 tEl.innerText = `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
-                if (!d.modalidadeLivre && s <= 0) card.classList.add('expired'); else card.classList.remove('expired');
+                
+                if (!d.modalidadeLivre && s <= 0) {
+                    card.classList.add('expired');
+                    if(!alertasAtivos[id]) {
+                        alertasAtivos[id] = true;
+                        window.alertarFim(d.veiculo);
+                        const n = new Notification("⏰ TEMPO ESGOTADO!", { body: `${d.veiculo} (${d.crianca}) acabou!` });
+                        n.onclick = () => { window.focus(); };
+                    }
+                } else { card.classList.remove('expired'); }
             }, 1000);
         });
     });
@@ -281,22 +344,41 @@
     };
 
     window.renderizarTabelas = () => {
-        const filtro = document.getElementById('filtro-brinquedo').value;
+        const filtroB = document.getElementById('filtro-brinquedo').value;
+        const filtroD = document.getElementById('filtro-data').value; // Formato YYYY-MM-DD
+        
+        // 1. Resumo por Brinquedo (Baseado em todos os dados carregados ou filtro se preferir)
         const tbAg = document.querySelector("#tabela-agrupada tbody");
         tbAg.innerHTML = "";
         const resumo = {};
         dadosHistorico.forEach(h => {
             if (!resumo[h.veiculo]) resumo[h.veiculo] = { min: 0, val: 0 };
-            resumo[h.veiculo].min += h.tempoReal;
-            resumo[h.veiculo].val += h.valor;
+            resumo[h.veiculo].min += h.tempoReal; resumo[h.veiculo].val += h.valor;
         });
         for (let v in resumo) tbAg.innerHTML += `<tr><td>${v}</td><td>${resumo[v].min}m</td><td>R$ ${resumo[v].val.toFixed(2)}</td></tr>`;
 
+        // 2. Tabela Detalhada com Agrupamento por Dia
         const tbDet = document.querySelector("#tabela-detalhada tbody");
         tbDet.innerHTML = "";
         let somaDet = 0;
+        let diaAtual = "";
+
         dadosHistorico.forEach(h => {
-            if (filtro === "Todos" || h.veiculo === filtro) {
+            const dataObj = new Date(h.data);
+            const dataString = dataObj.toLocaleDateString('pt-BR');
+            const dataISO = dataObj.toISOString().split('T')[0];
+
+            // Filtros
+            const passaFiltroBrinquedo = (filtroB === "Todos" || h.veiculo === filtroB);
+            const passaFiltroData = (!filtroD || dataISO === filtroD);
+
+            if (passaFiltroBrinquedo && passaFiltroData) {
+                // Cabeçalho do Dia (se mudou o dia e não estamos filtrando por um único dia fixo no input)
+                if (dataString !== diaAtual) {
+                    tbDet.innerHTML += `<tr><td colspan="6" class="header-dia">📅 Dia ${dataString}</td></tr>`;
+                    diaAtual = dataString;
+                }
+
                 somaDet += h.valor;
                 tbDet.innerHTML += `<tr>
                     <td>${h.veiculo}</td><td>${h.crianca}</td><td>${h.inicio}-${h.fim}</td><td>${h.tempoReal}m</td>
@@ -315,7 +397,7 @@
 
     window.alternarPagamentoCard = async (id) => {
         const r = doc(db, "ativos", id), s = await getDoc(r);
-        await updateDoc(r, { pago: s.data().pago === 'Sim' ? 'Não' : 'Sim' });
+        if(s.exists()) await updateDoc(r, { pago: s.data().pago === 'Sim' ? 'Não' : 'Sim' });
     };
 
     window.alternarPagamentoHist = async (id) => {
